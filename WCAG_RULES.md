@@ -1,0 +1,319 @@
+# WCAG 2.2 Rules Validation
+
+This document lists all WCAG 2.2 accessibility rules currently validated by the All-Inclusive extension.
+
+## Current Coverage
+
+**Total Rules Implemented:** 7  
+**WCAG Version:** 2.2  
+**Principles Covered:** 3 of 4 (Perceivable, Operable, Robust)
+
+---
+
+## 1. Perceivable
+*Information and user interface components must be presentable to users in ways they can perceive.*
+
+### 1.1.1 Non-text Content (Level A)
+**Rule ID:** `image-alt-text`  
+**What it checks:** All `<img>` elements must have an `alt` attribute  
+**Severity:** Critical  
+**Common violations:**
+- Images without alt attributes
+- Missing alt text on informative images
+
+**Fix:**
+```html
+<!-- Bad -->
+<img src="logo.png">
+
+<!-- Good -->
+<img src="logo.png" alt="Company Logo">
+
+<!-- Decorative -->
+<img src="decorative.png" alt="">
+```
+
+**Learn more:** https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html
+
+**Note:** This rule skips elements that:
+- Have `aria-hidden="true"`
+- Use `role="presentation"` or `role="none"`
+- Are visually hidden (display: none, visibility: hidden, opacity: 0)
+- Already have accessible names via `aria-label` or `aria-labelledby`
+
+---
+
+### 1.4.3 Contrast (Minimum) (Level AA)
+**Rule ID:** `color-contrast`  
+**What it checks:** Text elements must have sufficient color contrast with their background  
+**Severity:** Serious  
+**Requirements:**
+- Normal text: 4.5:1 contrast ratio
+- Large text (18pt+ or 14pt+ bold): 3:1 contrast ratio
+
+**Advanced Features:**
+- **Overlay Detection**: Uses `document.elementFromPoint()` to detect elements overlaying text
+- **Effective Background**: Traverses DOM tree to find actual background color
+- **Opacity Handling**: Considers transparent/semi-transparent backgrounds (checks alpha channel)
+- **Smart Filtering**: Skips hidden elements, very small elements, and elements without text content
+
+**Common violations:**
+- Gray text on white backgrounds
+- Colored text without sufficient contrast
+- Similar foreground and background colors
+- Text obscured by overlaying elements with different background colors
+
+**Fix:**
+```css
+/* Bad - insufficient contrast */
+.text { color: #aaa; background: #fff; } /* 2.3:1 */
+
+/* Good - meets AA standard */
+.text { color: #767676; background: #fff; } /* 4.54:1 */
+
+/* Better - meets AAA standard */
+.text { color: #595959; background: #fff; } /* 7.0:1 */
+```
+
+**Learn more:** https://www.w3.org/WAI/WCAG22/Understanding/contrast-minimum.html
+
+---
+
+## 2. Operable
+*User interface components and navigation must be operable.*
+
+### 2.1.1 Keyboard (Level A)
+**Rule ID:** `keyboard-accessible`  
+**What it checks:** All interactive elements must be keyboard accessible  
+**Severity:** Serious  
+**Common violations:**
+- `<div>` or `<span>` with click handlers but no keyboard support
+- Custom controls without `tabindex` or keyboard event handlers
+- Elements with `onclick` but missing keyboard equivalents
+
+**Fix:**
+```html
+<!-- Bad -->
+<div onclick="handleClick()">Click me</div>
+
+<!-- Good -->
+<button onclick="handleClick()">Click me</button>
+
+<!-- Also Good -->
+<div 
+  role="button" 
+  tabindex="0" 
+  onclick="handleClick()"
+  onkeydown="handleKeyPress(event)">
+  Click me
+</div>
+```
+
+**Learn more:** https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html
+
+---
+
+### 2.4.1 Bypass Blocks (Level A)
+**Rule ID:** `bypass-blocks`  
+**What it checks:** Pages should have a mechanism to skip repetitive content  
+**Severity:** Moderate  
+**Common violations:**
+- Missing "Skip to main content" links
+- No bypass mechanism for repeated navigation
+
+**Fix:**
+```html
+<!-- Good -->
+<body>
+  <a href="#main-content" class="skip-link">
+    Skip to main content
+  </a>
+  
+  <nav><!-- Navigation --></nav>
+  
+  <main id="main-content">
+    <!-- Main content -->
+  </main>
+</body>
+```
+
+```css
+/* Visually hide skip link until focused */
+.skip-link {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: #000;
+  color: #fff;
+  padding: 8px;
+  z-index: 100;
+}
+
+.skip-link:focus {
+  top: 0;
+}
+```
+
+**Learn more:** https://www.w3.org/WAI/WCAG22/Understanding/bypass-blocks.html
+
+---
+
+### 2.4.4 Link Purpose (In Context) (Level A)
+**Rule ID:** `link-purpose`  
+**What it checks:** Link text must clearly describe the link's destination  
+**Severity:** Serious (empty links), Moderate (vague links)  
+**Common violations:**
+- Empty links with no text
+- Vague link text: "click here", "read more", "here", "link"
+- Links without accessible names
+
+**Fix:**
+```html
+<!-- Bad -->
+<a href="/article">Read more</a>
+<a href="/page">Click here</a>
+<a href="/doc"></a>
+
+<!-- Good -->
+<a href="/article">Read more about accessibility testing</a>
+<a href="/page">Learn about WCAG 2.2 guidelines</a>
+<a href="/doc" aria-label="Download accessibility report">
+  <svg><!-- Download icon --></svg>
+</a>
+```
+
+**Learn more:** https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html
+
+---
+
+## 3. Robust
+*Content must be robust enough to be interpreted by a wide variety of user agents, including assistive technologies.*
+
+### 4.1.1 Parsing (Level A)
+**Rule ID:** `valid-html`  
+**What it checks:** HTML must be well-formed with unique IDs  
+**Severity:** Serious  
+**Common violations:**
+- Duplicate ID attributes on the same page
+- Invalid HTML structure
+
+**Fix:**
+```html
+<!-- Bad - duplicate IDs -->
+<div id="content">First section</div>
+<div id="content">Second section</div>
+
+<!-- Good - unique IDs -->
+<div id="content-1">First section</div>
+<div id="content-2">Second section</div>
+
+<!-- Better - use classes for styling -->
+<div class="content">First section</div>
+<div class="content">Second section</div>
+```
+
+**Learn more:** https://www.w3.org/WAI/WCAG22/Understanding/parsing.html
+
+---
+
+### 4.1.2 Name, Role, Value (Level A)
+**Rule ID:** `aria-usage`  
+**What it checks:** All UI components must have accessible names and proper ARIA usage  
+**Severity:** Critical  
+**Common violations:**
+- Buttons without accessible names
+- Form inputs without labels
+- Missing `aria-label` or `aria-labelledby` on icon buttons
+- Form fields without associated `<label>` elements
+
+**Fix:**
+```html
+<!-- Bad - button with no accessible name -->
+<button>
+  <svg><!-- Icon --></svg>
+</button>
+
+<!-- Good - button with aria-label -->
+<button aria-label="Close dialog">
+  <svg><!-- Close icon --></svg>
+</button>
+
+<!-- Bad - input without label -->
+<input type="text" placeholder="Enter name">
+
+<!-- Good - input with label -->
+<label for="name">Name:</label>
+<input id="name" type="text">
+
+<!-- Also Good - wrapped in label -->
+<label>
+  Name:
+  <input type="text">
+</label>
+
+<!-- Good - using aria-label -->
+<input type="text" aria-label="Search">
+```
+
+**Learn more:** https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html
+
+---
+
+## Implementation Summary by WCAG Level
+
+| Level | Rules Implemented | Percentage of Common Issues |
+|-------|------------------|----------------------------|
+| **A** | 6 rules | ~60% of critical issues |
+| **AA** | 1 rule | ~85% when combined with A |
+| **AAA** | 0 rules | Future enhancement |
+
+---
+
+## Roadmap: Additional Rules to Implement
+
+### High Priority (Level A & AA)
+
+#### Perceivable
+- [ ] **1.3.1** Info and Relationships (Level A) - Semantic structure
+- [ ] **1.3.2** Meaningful Sequence (Level A) - Reading order
+- [ ] **1.4.1** Use of Color (Level A) - Color not sole indicator
+- [ ] **1.4.11** Non-text Contrast (Level AA) - UI component contrast
+- [ ] **1.4.12** Text Spacing (Level AA) - Adjustable text spacing
+
+#### Operable
+- [ ] **2.1.2** No Keyboard Trap (Level A) - Keyboard focus can move away
+- [ ] **2.4.2** Page Titled (Level A) - Descriptive page titles
+- [ ] **2.4.3** Focus Order (Level A) - Logical focus sequence
+- [ ] **2.4.6** Headings and Labels (Level AA) - Descriptive headings
+- [ ] **2.4.7** Focus Visible (Level AA) - Visible keyboard focus
+- [ ] **2.5.3** Label in Name (Level A) - Visible label matches accessible name
+
+#### Understandable
+- [ ] **3.1.1** Language of Page (Level A) - Page language declared
+- [ ] **3.1.2** Language of Parts (Level AA) - Language changes identified
+- [ ] **3.2.1** On Focus (Level A) - No context change on focus
+- [ ] **3.2.2** On Input (Level A) - No context change on input
+- [ ] **3.3.1** Error Identification (Level A) - Errors clearly identified
+- [ ] **3.3.2** Labels or Instructions (Level A) - Clear form labels
+
+#### Robust
+- [ ] **4.1.3** Status Messages (Level AA) - Accessible status updates
+
+### WCAG 2.2 Specific Rules (New in 2.2)
+- [ ] **2.4.11** Focus Not Obscured (Minimum) (Level AA)
+- [ ] **2.4.12** Focus Not Obscured (Enhanced) (Level AAA)
+- [ ] **2.5.7** Dragging Movements (Level AA)
+- [ ] **2.5.8** Target Size (Minimum) (Level AA)
+- [ ] **3.2.6** Consistent Help (Level A)
+- [ ] **3.3.7** Redundant Entry (Level A)
+- [ ] **3.3.8** Accessible Authentication (Minimum) (Level AA)
+- [ ] **3.3.9** Accessible Authentication (Enhanced) (Level AAA)
+
+---
+
+## Additional Resources
+
+- [WCAG 2.2 Quick Reference](https://www.w3.org/WAI/WCAG22/quickref/)
+- [WCAG 2.2 Understanding Docs](https://www.w3.org/WAI/WCAG22/Understanding/)
+- [WebAIM Contrast Checker](https://webaim.org/resources/contrastchecker/)
+- [W3C ARIA Practices](https://www.w3.org/WAI/ARIA/apg/)

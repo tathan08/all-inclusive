@@ -1,0 +1,16 @@
+# OS generated files
+.DS_Store # macOS Finder files
+*~ # backup files
+**.swp # vim swap files
+
+# Dependency directories
+node_modules/
+
+# Build and temporary directories
+dist/
+build/
+_debug/ # Temporary directory for debugging extension samples
+_metadata/ # Generated metadata directory
+
+# Planning files
+ARCHITECTURE.md

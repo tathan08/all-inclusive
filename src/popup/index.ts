@@ -1,0 +1,311 @@
+import { ScanResult, Violation, MessageType, Severity } from '../types';
+
+// DOM Elements
+const scanButton = document.getElementById('scanButton') as HTMLButtonElement;
+const loading = document.getElementById('loading') as HTMLDivElement;
+const results = document.getElementById('results') as HTMLElement;
+const emptyState = document.getElementById('emptyState') as HTMLElement;
+const violationsList = document.getElementById('violationsList') as HTMLDivElement;
+
+// Stat counters
+const totalCount = document.getElementById('totalCount') as HTMLSpanElement;
+const criticalCount = document.getElementById('criticalCount') as HTMLSpanElement;
+const seriousCount = document.getElementById('seriousCount') as HTMLSpanElement;
+const moderateCount = document.getElementById('moderateCount') as HTMLSpanElement;
+
+// Filters
+const filterCritical = document.getElementById('filterCritical') as HTMLInputElement;
+const filterSerious = document.getElementById('filterSerious') as HTMLInputElement;
+const filterModerate = document.getElementById('filterModerate') as HTMLInputElement;
+const filterMinor = document.getElementById('filterMinor') as HTMLInputElement;
+
+let currentScanResult: ScanResult | null = null;
+
+/**
+ * Initialize the popup
+ */
+async function init() {
+  scanButton.addEventListener('click', handleScan);
+  
+  // Add filter listeners
+  [filterCritical, filterSerious, filterModerate, filterMinor].forEach(filter => {
+    filter.addEventListener('change', () => displayViolations(currentScanResult));
+  });
+
+  // Load last scan result from storage
+  const { lastScan } = await chrome.storage.local.get('lastScan');
+  if (lastScan) {
+    currentScanResult = lastScan;
+    displayResults(lastScan);
+  }
+}
+
+/**
+ * Handle scan button click
+ */
+async function handleScan() {
+  try {
+    scanButton.disabled = true;
+    loading.classList.remove('hidden');
+    results.classList.add('hidden');
+    emptyState.classList.add('hidden');
+
+    // Get active tab
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    
+    if (!tab.id) {
+      throw new Error('No active tab found');
+    }
+
+    // Check if the URL is a restricted page
+    if (tab.url && isRestrictedUrl(tab.url)) {
+      throw new Error('Cannot scan this page. Chrome extensions cannot access chrome://, chrome-extension://, or Chrome Web Store pages.');
+    }
+
+    // Try to ping the content script first
+    let contentScriptReady = false;
+    try {
+      await chrome.tabs.sendMessage(tab.id, { type: 'PING' });
+      contentScriptReady = true;
+    } catch (e) {
+      // Content script not ready, will inject it programmatically
+      contentScriptReady = false;
+    }
+
+    // If content script is not ready, inject it programmatically
+    if (!contentScriptReady) {
+      try {
+        await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          files: ['content/index.js'],
+        });
+        // Wait a bit for the script to initialize
+        await new Promise(resolve => setTimeout(resolve, 100));
+      } catch (injectError) {
+        throw new Error('Failed to inject content script. This page may not allow extensions.');
+      }
+    }
+
+    // Send message to content script to scan the page
+    const response = await chrome.tabs.sendMessage(tab.id, {
+      type: MessageType.SCAN_PAGE,
+    });
+
+    currentScanResult = response as ScanResult;
+    
+    // Store the result
+    await chrome.storage.local.set({ lastScan: currentScanResult });
+    
+    displayResults(currentScanResult);
+  } catch (error) {
+    console.error('Scan failed:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
+    showError(errorMessage);
+  } finally {
+    scanButton.disabled = false;
+    loading.classList.add('hidden');
+  }
+}
+
+/**
+ * Check if URL is restricted (cannot inject content scripts)
+ */
+function isRestrictedUrl(url: string): boolean {
+  const restrictedProtocols = ['chrome://', 'chrome-extension://', 'edge://', 'about:'];
+  const restrictedDomains = ['chrome.google.com/webstore'];
+  
+  return restrictedProtocols.some(protocol => url.startsWith(protocol)) ||
+         restrictedDomains.some(domain => url.includes(domain));
+}
+
+/**
+ * Show error message to user
+ */
+function showError(message: string) {
+  results.classList.add('hidden');
+  emptyState.classList.add('hidden');
+  loading.classList.add('hidden');
+  
+  // Create or update error display
+  let errorDiv = document.getElementById('errorMessage') as HTMLDivElement;
+  if (!errorDiv) {
+    errorDiv = document.createElement('div');
+    errorDiv.id = 'errorMessage';
+    errorDiv.className = 'error-message';
+    document.querySelector('.container')?.appendChild(errorDiv);
+  }
+  
+  errorDiv.innerHTML = `
+    <h3>Unable to Scan Page</h3>
+    <p>${escapeHtml(message)}</p>
+    <p class="error-hint">Try scanning a regular website instead.</p>
+  `;
+  errorDiv.classList.remove('hidden');
+}
+
+/**
+ * Display scan results
+ */
+function displayResults(scanResult: ScanResult) {
+  if (!scanResult) return;
+
+  // Hide error message if showing
+  const errorDiv = document.getElementById('errorMessage');
+  if (errorDiv) {
+    errorDiv.classList.add('hidden');
+  }
+
+  const { summary, violations } = scanResult;
+
+  // Update summary stats
+  totalCount.textContent = summary.total.toString();
+  criticalCount.textContent = summary.critical.toString();
+  seriousCount.textContent = summary.serious.toString();
+  moderateCount.textContent = summary.moderate.toString();
+
+  if (summary.total === 0) {
+    emptyState.classList.remove('hidden');
+    results.classList.add('hidden');
+  } else {
+    emptyState.classList.add('hidden');
+    results.classList.remove('hidden');
+    displayViolations(scanResult);
+  }
+}
+
+/**
+ * Display filtered violations list
+ */
+function displayViolations(scanResult: ScanResult | null) {
+  if (!scanResult) return;
+
+  violationsList.innerHTML = '';
+
+  // Get active filters
+  const activeFilters: Severity[] = [];
+  if (filterCritical.checked) activeFilters.push(Severity.CRITICAL);
+  if (filterSerious.checked) activeFilters.push(Severity.SERIOUS);
+  if (filterModerate.checked) activeFilters.push(Severity.MODERATE);
+  if (filterMinor.checked) activeFilters.push(Severity.MINOR);
+
+  // Filter violations
+  const filteredViolations = scanResult.violations.filter(v => 
+    activeFilters.includes(v.severity)
+  );
+
+  if (filteredViolations.length === 0) {
+    violationsList.innerHTML = '<p class="no-results">No violations match the current filters.</p>';
+    return;
+  }
+
+  // Render violations
+  filteredViolations.forEach((violation, index) => {
+    const violationCard = createViolationCard(violation, index);
+    violationsList.appendChild(violationCard);
+  });
+}
+
+/**
+ * Create a violation card element
+ */
+function createViolationCard(violation: Violation, index: number): HTMLElement {
+  const card = document.createElement('div');
+  card.className = `violation-card severity-${violation.severity}`;
+  
+  const header = document.createElement('div');
+  header.className = 'violation-header';
+  
+  const title = document.createElement('h3');
+  title.className = 'violation-title';
+  title.innerHTML = `
+    <span class="violation-number">${index + 1}</span>
+    <span>${violation.message}</span>
+    <span class="severity-badge severity-${violation.severity}">${violation.severity}</span>
+  `;
+  
+  header.appendChild(title);
+  
+  const meta = document.createElement('div');
+  meta.className = 'violation-meta';
+  meta.innerHTML = `
+    <span class="wcag-tag">${violation.principle.toUpperCase()}</span>
+    <span class="wcag-tag">WCAG ${violation.wcagCriteria} (Level ${violation.level})</span>
+  `;
+  
+  const description = document.createElement('p');
+  description.className = 'violation-description';
+  description.textContent = violation.description;
+  
+  const elementInfo = document.createElement('div');
+  elementInfo.className = 'violation-element';
+  elementInfo.innerHTML = `
+    <strong>Element:</strong>
+    <code>${escapeHtml(violation.htmlSnippet)}</code>
+  `;
+  
+  card.appendChild(header);
+  card.appendChild(meta);
+  card.appendChild(description);
+  card.appendChild(elementInfo);
+  
+  if (violation.suggestion) {
+    const suggestion = document.createElement('div');
+    suggestion.className = 'violation-suggestion';
+    suggestion.innerHTML = `<strong>Suggestion:</strong> ${violation.suggestion}`;
+    card.appendChild(suggestion);
+  }
+  
+  // Footer with Search in code and Learn More links
+  const footer = document.createElement('div');
+  footer.className = 'violation-footer';
+  
+  const searchButton = document.createElement('button');
+  searchButton.className = 'search-in-code';
+  searchButton.textContent = 'Inspect element';
+  searchButton.title = 'Scroll to and highlight this element (if DevTools is open, it will be selected in the Elements panel)';
+  searchButton.addEventListener('click', () => inspectElement(violation.element));
+  footer.appendChild(searchButton);
+  
+  if (violation.learnMoreUrl) {
+    const learnMore = document.createElement('a');
+    learnMore.className = 'learn-more';
+    learnMore.href = violation.learnMoreUrl;
+    learnMore.target = '_blank';
+    learnMore.textContent = 'Learn More →';
+    footer.appendChild(learnMore);
+  }
+  
+  card.appendChild(footer);
+  
+  return card;
+}
+
+/**
+ * Open DevTools and inspect the element
+ */
+async function inspectElement(elementSelector: string) {
+  try {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (!tab.id) return;
+
+    // Send message to content script to inspect element
+    await chrome.tabs.sendMessage(tab.id, {
+      type: 'INSPECT_ELEMENT',
+      selector: elementSelector
+    });
+  } catch (error) {
+    console.error('Failed to inspect element:', error);
+  }
+}
+
+/**
+ * Escape HTML to prevent XSS
+ */
+function escapeHtml(html: string): string {
+  const div = document.createElement('div');
+  div.textContent = html;
+  return div.innerHTML;
+}
+
+// Initialize when popup loads
+init();

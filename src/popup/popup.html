@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>All-Inclusive - Accessibility Checker</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>
+        All-Inclusive
+      </h1>
+      <p class="tagline">WCAG Accessibility Checker</p>
+    </header>
+
+    <section class="scan-section">
+      <button id="scanButton" class="btn-primary">
+        Scan This Page
+      </button>
+      <div id="loading" class="loading hidden">
+        <div class="spinner"></div>
+        <p>Analyzing page...</p>
+      </div>
+    </section>
+
+    <section id="results" class="results hidden">
+      <div class="summary">
+        <h2>Scan Results</h2>
+        <div class="summary-stats">
+          <div class="stat-item stat-total">
+            <span class="stat-number" id="totalCount">0</span>
+            <span class="stat-label">Total Issues</span>
+          </div>
+          <div class="stat-item stat-critical">
+            <span class="stat-number" id="criticalCount">0</span>
+            <span class="stat-label">Critical</span>
+          </div>
+          <div class="stat-item stat-serious">
+            <span class="stat-number" id="seriousCount">0</span>
+            <span class="stat-label">Serious</span>
+          </div>
+          <div class="stat-item stat-moderate">
+            <span class="stat-number" id="moderateCount">0</span>
+            <span class="stat-label">Moderate</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="filters">
+        <label>
+          <input type="checkbox" id="filterCritical" checked>
+          Critical
+        </label>
+        <label>
+          <input type="checkbox" id="filterSerious" checked>
+          Serious
+        </label>
+        <label>
+          <input type="checkbox" id="filterModerate" checked>
+          Moderate
+        </label>
+        <label>
+          <input type="checkbox" id="filterMinor" checked>
+          Minor
+        </label>
+      </div>
+
+      <div id="violationsList" class="violations-list"></div>
+    </section>
+
+    <section id="emptyState" class="empty-state">
+      <h3>No Issues Found</h3>
+      <p>This page appears to be accessible!</p>
+    </section>
+  </div>
+
+  <script src="index.js"></script>
+</body>
+</html>
