@@ -118,7 +118,7 @@ function toggleSpotlight(selector: string) {
       left: 0;
       width: 100vw;
       height: 100vh;
-      background: rgba(0, 0, 0, 0.7);
+      background: rgba(0, 0, 0, 0.5);
       z-index: 999999;
       pointer-events: none;
     `;
@@ -136,7 +136,7 @@ function toggleSpotlight(selector: string) {
       width: ${rect.width + 8}px;
       height: ${rect.height + 8}px;
       border: 3px solid #667eea;
-      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.7),
+      box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5),
                   0 0 20px rgba(102, 126, 234, 0.8),
                   inset 0 0 20px rgba(102, 126, 234, 0.3);
       border-radius: 4px;
