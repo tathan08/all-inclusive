@@ -261,8 +261,8 @@ function createViolationCard(violation: Violation, index: number): HTMLElement {
   
   const searchButton = document.createElement('button');
   searchButton.className = 'search-in-code';
-  searchButton.textContent = 'Inspect element';
-  searchButton.title = 'Scroll to and highlight this element (if DevTools is open, it will be selected in the Elements panel)';
+  searchButton.textContent = 'Spotlight element';
+  searchButton.title = 'Toggle spotlight: Highlight this element and gray out the rest of the page';
   searchButton.addEventListener('click', () => inspectElement(violation.element));
   footer.appendChild(searchButton);
   
