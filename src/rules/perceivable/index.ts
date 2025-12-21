@@ -251,7 +251,7 @@ export const headingStructure: AccessibilityRule = {
           description: `An ${htmlHeading.tagName} heading has no text content. Empty headings confuse screen reader users.`,
           element: `[data-violation="${uniqueId}"]`,
           htmlSnippet: htmlHeading.outerHTML.substring(0, 200),
-          suggestion: 'Add descriptive text to the heading or remove it if it serves no purpose. Additional resources: https://webaim.org/techniques/semanticstructure/ and https://accessibility.psu.edu/headingshtml/',
+          suggestion: 'Add descriptive text to the heading or remove it if it serves no purpose.',
           learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html',
         });
         return;
@@ -278,7 +278,7 @@ export const headingStructure: AccessibilityRule = {
         description: 'This page has no H1 heading. The H1 should be used for the main page title to help users understand the page structure.',
         element: `[data-violation="${uniqueId}"]`,
         htmlSnippet: `First heading: ${firstHeading.outerHTML.substring(0, 200)}`,
-        suggestion: 'Add an H1 heading at the top of the page that describes the main content or purpose of the page. Additional resources: https://webaim.org/techniques/semanticstructure/ and https://accessibility.psu.edu/headingshtml/',
+        suggestion: 'Add an H1 heading at the top of the page that describes the main content or purpose of the page.',
         learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html',
       });
     }
@@ -303,7 +303,7 @@ export const headingStructure: AccessibilityRule = {
             description: `This page has ${h1Count} H1 headings. Best practice is to have only one H1 per page to clearly identify the main topic.`,
             element: `[data-violation="${uniqueId}"]`,
             htmlSnippet: element.outerHTML.substring(0, 200),
-            suggestion: 'Change additional H1 headings to H2 or lower levels based on their relationship to the main heading. Additional resources: https://webaim.org/techniques/semanticstructure/ and https://accessibility.psu.edu/headingshtml/',
+            suggestion: 'Change additional H1 headings to H2 or lower levels based on their relationship to the main heading.',
             learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html',
           });
         });
@@ -331,7 +331,7 @@ export const headingStructure: AccessibilityRule = {
           description: `This H${current.level} heading follows an H${previous.level} heading, skipping ${levelDifference - 1} level(s). This breaks the document outline and confuses screen reader users.`,
           element: `[data-violation="${uniqueId}"]`,
           htmlSnippet: current.element.outerHTML.substring(0, 200),
-          suggestion: `Use H${previous.level + 1} instead, or restructure your headings to follow a logical hierarchy (H1 → H2 → H3, etc.). Additional resources: https://webaim.org/techniques/semanticstructure/ and https://accessibility.psu.edu/headingshtml/`,
+          suggestion: `Use H${previous.level + 1} instead, or restructure your headings to follow a logical hierarchy (H1 → H2 → H3, etc.).`,
           learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html',
         });
       }
