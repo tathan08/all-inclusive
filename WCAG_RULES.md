@@ -4,7 +4,7 @@ This document lists all WCAG 2.2 accessibility rules currently validated by the 
 
 ## Current Coverage
 
-**Total Rules Implemented:** 11  
+**Total Rules Implemented:** 12  
 **WCAG Version:** 2.2  
 **Principles Covered:** 4 of 4 (Perceivable, Operable, Understandable, Robust)
 
@@ -244,6 +244,57 @@ Screen reader users navigate by jumping between headings. A logical heading stru
 ```
 
 **Learn more:** https://www.w3.org/WAI/WCAG22/Understanding/link-purpose-in-context.html
+
+---
+
+### 2.4.3 Focus Order (Level A)
+**Rule ID:** `focus-order`  
+**What it checks:** Proper tabindex usage and focusable element visibility  
+**Severity:** Serious (positive tabindex), Moderate (hidden focusable), Minor (negative on native)  
+
+**Requirements:**
+- No positive tabindex values (tabindex > 0)
+- Focusable elements should not be hidden
+- Native interactive elements should remain in tab order
+
+**Common violations:**
+- Elements with tabindex="1", tabindex="2", etc.
+- Hidden elements (display: none, visibility: hidden) with tabindex >= 0
+- Buttons or links with tabindex="-1" removed from keyboard access
+- Disrupted natural tab order
+
+**Fix:**
+```html
+<!-- Bad - Positive tabindex -->
+<div tabindex="1">First</div>
+<div tabindex="2">Second</div>
+
+<!-- Bad - Hidden but focusable -->
+<button tabindex="0" style="display: none;">Hidden Button</button>
+
+<!-- Bad - Native element removed from tab order -->
+<button tabindex="-1">Click me</button>
+
+<!-- Good - Natural tab order -->
+<button>First Button</button>
+<a href="/page">Link</a>
+<button>Second Button</button>
+
+<!-- Good - Custom element in natural order -->
+<div role="button" tabindex="0">Custom Button</div>
+
+<!-- Good - Programmatic focus only (valid use of -1) -->
+<div tabindex="-1" id="error-message">Error: Please fix...</div>
+```
+
+**Valid uses of tabindex:**
+- `tabindex="0"` - Adds element to natural tab order
+- `tabindex="-1"` - Allows programmatic focus but not keyboard navigation (use sparingly, valid for modals/error messages)
+- No tabindex - Use native interactive elements when possible
+
+**Learn more:** 
+- https://www.w3.org/WAI/WCAG22/Understanding/focus-order.html
+- https://webaim.org/techniques/keyboard/tabindex
 
 ---
 
