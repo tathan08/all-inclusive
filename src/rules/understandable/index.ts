@@ -63,7 +63,7 @@ export const formLabels: AccessibilityRule = {
           description: `This ${type} input (name: "${inputName}") does not have an associated label. Users, especially those using screen readers, need labels to understand what information to enter.`,
           element: `[data-violation="${uniqueId}"]`,
           htmlSnippet: input.outerHTML.substring(0, 200),
-          suggestion: 'Add a <label> element with a "for" attribute that matches the input\'s id, or wrap the input in a <label>. Alternatively, use aria-label or aria-labelledby.',
+          suggestion: 'Add a &lt;label&gt; element with a "for" attribute that matches the input\'s id, or wrap the input in a &lt;label&gt;. Alternatively, use aria-label or aria-labelledby.',
           learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html',
         });
       }
@@ -142,7 +142,7 @@ export const fieldsetLegend: AccessibilityRule = {
             description: `This group of ${inputs.length} radio buttons (name: "${name}") is not properly grouped with a <fieldset> and <legend>. Screen reader users may not understand that these options are related.`,
             element: `[data-violation="${uniqueId}"]`,
             htmlSnippet: firstInput.outerHTML.substring(0, 200),
-            suggestion: 'Wrap all radio buttons in this group with a <fieldset> element and add a <legend> that describes the group.',
+            suggestion: 'Wrap all radio buttons in this group with a &lt;fieldset&gt; element and add a &lt;legend&gt; that describes the group.',
             learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html',
           });
         } else if (firstFieldset) {
@@ -164,7 +164,7 @@ export const fieldsetLegend: AccessibilityRule = {
               description: `The <fieldset> containing radio buttons (name: "${name}") does not have a <legend> element or the legend is empty. The legend provides a description of the group for screen reader users.`,
               element: `[data-violation="${uniqueId}"]`,
               htmlSnippet: firstFieldset.outerHTML.substring(0, 200),
-              suggestion: 'Add a <legend> element as the first child of the <fieldset> with text that describes what this group of options represents.',
+              suggestion: 'Add a &lt;legend&gt; element as the first child of the &lt;fieldset&gt; with text that describes what this group of options represents.',
               learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html',
             });
           }
@@ -194,7 +194,7 @@ export const fieldsetLegend: AccessibilityRule = {
             description: `This group of ${inputs.length} checkboxes (name: "${name}") should be grouped with a <fieldset> and <legend> for better clarity and accessibility.`,
             element: `[data-violation="${uniqueId}"]`,
             htmlSnippet: firstInput.outerHTML.substring(0, 200),
-            suggestion: 'Consider wrapping related checkboxes with a <fieldset> element and add a <legend> that describes the group.',
+            suggestion: 'Consider wrapping related checkboxes with a &lt;fieldset&gt; element and add a &lt;legend&gt; that describes the group.',
             learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html',
           });
         } else if (firstFieldset) {
@@ -215,7 +215,7 @@ export const fieldsetLegend: AccessibilityRule = {
               description: `The <fieldset> containing checkboxes (name: "${name}") does not have a <legend> element or the legend is empty.`,
               element: `[data-violation="${uniqueId}"]`,
               htmlSnippet: firstFieldset.outerHTML.substring(0, 200),
-              suggestion: 'Add a <legend> element as the first child of the <fieldset> with text that describes what this group represents.',
+              suggestion: 'Add a &lt;legend&gt; element as the first child of the &lt;fieldset&gt; with text that describes what this group represents.',
               learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html',
             });
           }
