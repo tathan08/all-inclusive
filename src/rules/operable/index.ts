@@ -171,4 +171,115 @@ export const bypassBlocks: AccessibilityRule = {
   },
 };
 
-export default [keyboardAccessible, linkPurpose, bypassBlocks];
+/**
+ * Check for proper focus order and tabindex usage
+ * WCAG 2.4.3 - Focus Order (Level A)
+ */
+export const focusOrder: AccessibilityRule = {
+  id: 'focus-order',
+  name: 'Focus order must be logical and tabindex used properly',
+  description: 'Tabindex should not have positive values, and focusable elements should not be hidden',
+  principle: WCAGPrinciple.OPERABLE,
+  wcagCriteria: '2.4.3',
+  level: WCAGLevel.A,
+  check: (root: Element | Document): Violation[] => {
+    const violations: Violation[] = [];
+    
+    // Check all elements with tabindex attribute
+    const elementsWithTabindex = root.querySelectorAll('[tabindex]');
+    
+    elementsWithTabindex.forEach((element, index) => {
+      // Skip if element should not be checked (hidden, presentation role, etc.)
+      if (!shouldCheckElement(element)) {
+        return;
+      }
+      
+      const tabindexValue = element.getAttribute('tabindex');
+      const tabindexNum = parseInt(tabindexValue || '0', 10);
+      const tagName = element.tagName.toLowerCase();
+      const computedStyle = window.getComputedStyle(element as HTMLElement);
+      
+      // Check for positive tabindex (bad practice)
+      if (tabindexNum > 0) {
+        const uniqueId = `violation-${Date.now()}-${index}-positive`;
+        element.setAttribute('data-violation', uniqueId);
+        
+        violations.push({
+          id: `focus-positive-tabindex-${index}`,
+          ruleId: 'focus-order',
+          principle: WCAGPrinciple.OPERABLE,
+          wcagCriteria: '2.4.3',
+          level: WCAGLevel.A,
+          severity: Severity.SERIOUS,
+          message: `Element has positive tabindex="${tabindexNum}"`,
+          description: `This ${tagName} element has tabindex="${tabindexNum}". Positive tabindex values disrupt the natural tab order and are considered bad practice. They make it difficult for keyboard users to navigate predictably.`,
+          element: `[data-violation="${uniqueId}"]`,
+          htmlSnippet: element.outerHTML.substring(0, 200),
+          suggestion: 'Remove the tabindex attribute if this is a naturally focusable element, or change to tabindex="0" to include it in the natural tab order without disrupting the sequence.',
+          learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/focus-order.html',
+        });
+      }
+      
+      // Check for focusable but hidden elements
+      if (tabindexNum >= 0) {
+        const isHidden = 
+          computedStyle.display === 'none' || 
+          computedStyle.visibility === 'hidden' ||
+          parseFloat(computedStyle.opacity) === 0;
+        
+        if (isHidden) {
+          const uniqueId = `violation-${Date.now()}-${index}-hidden`;
+          element.setAttribute('data-violation', uniqueId);
+          
+          violations.push({
+            id: `focus-hidden-focusable-${index}`,
+            ruleId: 'focus-order',
+            principle: WCAGPrinciple.OPERABLE,
+            wcagCriteria: '2.4.3',
+            level: WCAGLevel.A,
+            severity: Severity.MODERATE,
+            message: 'Focusable element is hidden',
+            description: `This ${tagName} element has tabindex="${tabindexValue}" but is visually hidden (display: ${computedStyle.display}, visibility: ${computedStyle.visibility}, opacity: ${computedStyle.opacity}). This can confuse keyboard users who tab to invisible elements.`,
+            element: `[data-violation="${uniqueId}"]`,
+            htmlSnippet: element.outerHTML.substring(0, 200),
+            suggestion: 'Either remove the element from the tab order (use tabindex="-1" or remove tabindex), or make the element visible. If this is intentional for skip links, ensure proper focus styles are applied.',
+            learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/focus-order.html',
+          });
+        }
+      }
+      
+      // Check for negative tabindex on native interactive elements
+      const nativeInteractive = ['a', 'button', 'input', 'select', 'textarea'];
+      if (tabindexNum === -1 && nativeInteractive.includes(tagName)) {
+        // Only flag if it's not a skip link or intentionally hidden for accessibility
+        const text = (element.textContent || '').toLowerCase();
+        const ariaLabel = (element.getAttribute('aria-label') || '').toLowerCase();
+        const isSkipLink = text.includes('skip') || ariaLabel.includes('skip');
+        
+        if (!isSkipLink) {
+          const uniqueId = `violation-${Date.now()}-${index}-negative`;
+          element.setAttribute('data-violation', uniqueId);
+          
+          violations.push({
+            id: `focus-negative-native-${index}`,
+            ruleId: 'focus-order',
+            principle: WCAGPrinciple.OPERABLE,
+            wcagCriteria: '2.4.3',
+            level: WCAGLevel.A,
+            severity: Severity.MINOR,
+            message: 'Native interactive element removed from tab order',
+            description: `This ${tagName} element has tabindex="-1", which removes it from the keyboard tab order. Native interactive elements like links and buttons should normally be keyboard accessible.`,
+            element: `[data-violation="${uniqueId}"]`,
+            htmlSnippet: element.outerHTML.substring(0, 200),
+            suggestion: 'Remove the tabindex="-1" attribute to restore keyboard accessibility, unless this element is intentionally meant to be programmatically focused only (e.g., for focus management in modals or dynamic content).',
+            learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/focus-order.html',
+          });
+        }
+      }
+    });
+    
+    return violations;
+  },
+};
+
+export default [keyboardAccessible, linkPurpose, bypassBlocks, focusOrder];
