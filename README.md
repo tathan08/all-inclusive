@@ -110,6 +110,7 @@ npm test
 - Keyboard accessibility (WCAG 2.1.1)
 - Link purpose (WCAG 2.4.4)
 - Skip navigation (WCAG 2.4.1)
+- Focus order (WCAG 2.4.3)
 
 ### Understandable
 - Form labels (WCAG 3.3.2)
@@ -122,19 +123,17 @@ npm test
 
 ## Roadmap
 
-### Phase 1: MVP (Current)
+### Phase 1: MVP
 - [x] Basic popup UI
 - [x] Page scanning
 - [x] Core WCAG rules
 - [x] Results display
 
-### Phase 2: Enhanced Detection
+### Phase 2: Enhanced Detection (Current)
 - [x] Advanced color contrast calculation with overlay detection
 - [x] Heading structure analysis
 - [x] Form validation
-- [ ] Landmark regions
-- [ ] Focus order
-- [ ] Language attributes
+- [x] Focus order
 
 ### Phase 3: Visual Overlay
 - [ ] Highlight violations on page with numbered tags
