@@ -4,9 +4,9 @@ This document lists all WCAG 2.2 accessibility rules currently validated by the 
 
 ## Current Coverage
 
-**Total Rules Implemented:** 8  
+**Total Rules Implemented:** 11  
 **WCAG Version:** 2.2  
-**Principles Covered:** 3 of 4 (Perceivable, Operable, Robust)
+**Principles Covered:** 4 of 4 (Perceivable, Operable, Understandable, Robust)
 
 ---
 
@@ -247,7 +247,139 @@ Screen reader users navigate by jumping between headings. A logical heading stru
 
 ---
 
-## 3. Robust
+## 3. Understandable
+*Information and the operation of user interface must be understandable.*
+
+### 3.3.2 Labels or Instructions (Level A)
+**Rule ID:** `form-labels`  
+**What it checks:** All form inputs must have associated labels or instructions  
+**Severity:** Critical  
+**Requirements:**
+- All form fields must have labels that describe their purpose
+- Labels must be programmatically associated with their controls
+- Instructions must be clear and available to all users
+
+**Common violations:**
+- Input fields without `<label>` elements
+- Labels not associated via `for` attribute
+- No aria-label or aria-labelledby on unlabeled inputs
+- Missing instructions for complex inputs
+
+**Fix:**
+```html
+<!-- Bad -->
+<input type="text" name="email">
+
+<!-- Good - Label with for attribute -->
+<label for="email">Email Address:</label>
+<input type="text" id="email" name="email">
+
+<!-- Good - Wrapped label -->
+<label>
+  Email Address:
+  <input type="text" name="email">
+</label>
+
+<!-- Good - ARIA label -->
+<input type="text" name="email" aria-label="Email Address">
+```
+
+**Learn more:** 
+- https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html
+- https://webaim.org/techniques/forms/
+- https://www.w3.org/WAI/tutorials/forms/labels/
+
+---
+
+### 1.3.1 Info and Relationships (Level A) - Fieldsets
+**Rule ID:** `fieldset-legend`  
+**What it checks:** Related form controls must be grouped with fieldset and legend  
+**Severity:** Serious (radio buttons), Moderate (checkbox groups)  
+**Requirements:**
+- Radio button groups must be wrapped in `<fieldset>` with `<legend>`
+- Groups of 3+ related checkboxes should use `<fieldset>` with `<legend>`
+- Legend must have descriptive text content
+
+**Common violations:**
+- Radio buttons not in fieldset
+- Fieldset without legend
+- Empty or missing legend text
+- Checkboxes that appear related but aren't grouped
+
+**Fix:**
+```html
+<!-- Bad -->
+<label><input type="radio" name="shipping" value="standard"> Standard</label>
+<label><input type="radio" name="shipping" value="express"> Express</label>
+
+<!-- Good -->
+<fieldset>
+  <legend>Shipping Method</legend>
+  <label><input type="radio" name="shipping" value="standard"> Standard Shipping</label>
+  <label><input type="radio" name="shipping" value="express"> Express Shipping</label>
+  <label><input type="radio" name="shipping" value="overnight"> Overnight</label>
+</fieldset>
+
+<!-- Good - Checkbox group -->
+<fieldset>
+  <legend>Select your interests</legend>
+  <label><input type="checkbox" name="interests" value="tech"> Technology</label>
+  <label><input type="checkbox" name="interests" value="design"> Design</label>
+  <label><input type="checkbox" name="interests" value="business"> Business</label>
+</fieldset>
+```
+
+**Learn more:** 
+- https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html
+- https://webaim.org/techniques/forms/controls#checkbox
+- https://www.w3.org/WAI/tutorials/forms/grouping/
+
+---
+
+### 3.3.2 Labels or Instructions (Level A) - Required Fields
+**Rule ID:** `required-fields`  
+**What it checks:** Required fields must be programmatically indicated  
+**Severity:** Serious  
+**Requirements:**
+- Required fields must have `required` attribute or `aria-required="true"`
+- Don't rely solely on visual indicators (asterisks, color, text)
+- Screen readers must be able to identify required fields
+
+**Common violations:**
+- Visual asterisk (*) or "required" text without programmatic indication
+- Color-only indicators for required fields
+- Required attribute missing on visually-marked required fields
+
+**Fix:**
+```html
+<!-- Bad - Visual indicator only -->
+<label>Email Address *</label>
+<input type="text" name="email">
+
+<!-- Good - Programmatic indication -->
+<label>Email Address *</label>
+<input type="text" name="email" required>
+
+<!-- Good - ARIA required -->
+<label>Email Address *</label>
+<input type="text" name="email" aria-required="true">
+
+<!-- Best - Both visual and programmatic -->
+<label>
+  Email Address 
+  <span aria-label="required">*</span>
+</label>
+<input type="text" name="email" required>
+```
+
+**Learn more:** 
+- https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html
+- https://webaim.org/techniques/forms/controls#required
+- https://www.w3.org/WAI/tutorials/forms/instructions/#required
+
+---
+
+## 4. Robust
 *Content must be robust enough to be interpreted by a wide variety of user agents, including assistive technologies.*
 
 ### 4.1.1 Parsing (Level A)

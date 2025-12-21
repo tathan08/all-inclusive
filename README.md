@@ -112,7 +112,9 @@ npm test
 - Skip navigation (WCAG 2.4.1)
 
 ### Understandable
-- 
+- Form labels (WCAG 3.3.2)
+- Fieldset and legend (WCAG 1.3.1)
+- Required fields (WCAG 3.3.2)
 
 ### Robust
 - Valid HTML - duplicate IDs (WCAG 4.1.1)
@@ -129,7 +131,7 @@ npm test
 ### Phase 2: Enhanced Detection
 - [x] Advanced color contrast calculation with overlay detection
 - [x] Heading structure analysis
-- [ ] Form validation
+- [x] Form validation
 - [ ] Landmark regions
 - [ ] Focus order
 - [ ] Language attributes
