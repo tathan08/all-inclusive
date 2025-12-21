@@ -22,7 +22,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
   
   if (message.type === 'INSPECT_ELEMENT') {
-    inspectElement(message.selector);
+    toggleSpotlight(message.selector);
     sendResponse({ success: true });
   }
   
@@ -82,80 +82,159 @@ function scanPage(): ScanResult {
 }
 
 /**
- * Inspect an element by scrolling to it and highlighting it
+ * Toggle spotlight mode on an element
  */
-let currentHighlightedElement: HTMLElement | null = null;
-let currentHighlightInterval: NodeJS.Timeout | null = null;
+let spotlightActive = false;
 
-function inspectElement(selector: string) {
+function toggleSpotlight(selector: string) {
   try {
-    // Clear previous highlights
-    if (currentHighlightedElement) {
-      currentHighlightedElement.style.outline = '';
-      currentHighlightedElement.style.outlineOffset = '';
+    // If spotlight is already active, turn it off
+    if (spotlightActive) {
+      cleanupSpotlight();
+      return;
     }
-    if (currentHighlightInterval) {
-      clearInterval(currentHighlightInterval);
-      currentHighlightInterval = null;
-    }
-    
+
     const element = document.querySelector(selector);
     if (!element) {
       console.warn(`Element not found: ${selector}`);
       return;
     }
 
-    // Scroll element into view
-    element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-
     const htmlElement = element as HTMLElement;
-    currentHighlightedElement = htmlElement;
-    
-    // Add highlight
-    htmlElement.style.outline = '3px solid #667eea';
-    htmlElement.style.outlineOffset = '2px';
 
-    // Flash the highlight
-    let flashCount = 0;
-    currentHighlightInterval = setInterval(() => {
-      if (flashCount >= 6) {
-        if (currentHighlightInterval) {
-          clearInterval(currentHighlightInterval);
-          currentHighlightInterval = null;
-        }
-        htmlElement.style.outline = '';
-        htmlElement.style.outlineOffset = '';
-        currentHighlightedElement = null;
-        return;
-      }
+    // Check if element is already in view
+    const rect = htmlElement.getBoundingClientRect();
+    const isInView = rect.top >= 0 && rect.bottom <= window.innerHeight;
+
+    // Function to create the spotlight
+    const createSpotlight = () => {
+      // Clean up any existing spotlight elements first
+      cleanupSpotlight();
       
-      htmlElement.style.outline = flashCount % 2 === 0 ? '3px solid #667eea' : '3px solid #764ba2';
-      flashCount++;
-    }, 200);
+      // Create dark overlay
+      const overlay = document.createElement('div');
+      overlay.id = 'all-inclusive-spotlight-overlay';
+      overlay.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 999999;
+        pointer-events: none;
+      `;
+      document.body.appendChild(overlay);
 
-    // Store element globally for DevTools access
-    (window as any).__ALL_INCLUSIVE_INSPECT_TARGET__ = element;
+      // Get element position and dimensions after scroll
+      const currentRect = htmlElement.getBoundingClientRect();
+      
+      // Create bounding box around the element
+      const boundingBox = document.createElement('div');
+      boundingBox.id = 'all-inclusive-bounding-box';
+      boundingBox.style.cssText = `
+        position: fixed;
+        top: ${currentRect.top - 4}px;
+        left: ${currentRect.left - 4}px;
+        width: ${currentRect.width + 8}px;
+        height: ${currentRect.height + 8}px;
+        border: 3px solid #667eea;
+        box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.5),
+                    0 0 20px rgba(102, 126, 234, 0.8),
+                    inset 0 0 20px rgba(102, 126, 234, 0.3);
+        border-radius: 4px;
+        z-index: 1000000;
+        pointer-events: none;
+        box-sizing: border-box;
+      `;
 
-    // Log to console with inspect capability
-    console.log('%c🔍 All-Inclusive: Accessibility Issue Found', 'background: #667eea; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;');
-    console.log('Element:', element);
-    console.log('Selector:', selector);
-    console.log('To inspect in DevTools, the element is stored in: window.__ALL_INCLUSIVE_INSPECT_TARGET__');
-    console.log('Or right-click the element above and select "Reveal in Elements panel"');
-    console.log('Details:', {
-      tagName: element.tagName,
-      id: element.id,
-      className: element.className,
-      textContent: htmlElement.textContent?.substring(0, 100)
-    });
-    
-    // Try to use inspect() if available (works when DevTools is open)
-    if (typeof (window as any).inspect === 'function') {
-      (window as any).inspect(element);
+      document.body.appendChild(boundingBox);
+      spotlightActive = true;
+    };
+
+    // If element is already in view, create spotlight immediately
+    if (isInView) {
+      createSpotlight();
+    } else {
+      // Scroll element into view first
+      element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+
+      // Track if spotlight has been created
+      let spotlightCreated = false;
+
+      // Listen for scrollend event (modern browsers)
+      const scrollEndHandler = () => {
+        if (!spotlightCreated) {
+          spotlightCreated = true;
+          createSpotlight();
+        }
+        document.removeEventListener('scrollend', scrollEndHandler);
+      };
+
+      // Fallback timeout in case scrollend doesn't fire
+      const timeoutId = setTimeout(() => {
+        if (!spotlightCreated) {
+          spotlightCreated = true;
+          createSpotlight();
+        }
+      }, 800);
+
+      // Check if scrollend is supported
+      if ('onscrollend' in window) {
+        document.addEventListener('scrollend', scrollEndHandler);
+      } else {
+        // Fallback: use multiple requestAnimationFrame to ensure scroll is done
+        let lastScrollTop = (window as Window).pageYOffset || document.documentElement.scrollTop;
+        let stableCount = 0;
+        
+        const checkScroll = () => {
+          if (spotlightCreated) return;
+          
+          const currentScrollTop = (window as Window).pageYOffset || document.documentElement.scrollTop;
+          
+          if (Math.abs(currentScrollTop - lastScrollTop) < 1) {
+            stableCount++;
+            if (stableCount >= 3) {
+              clearTimeout(timeoutId);
+              spotlightCreated = true;
+              createSpotlight();
+              return;
+            }
+          } else {
+            stableCount = 0;
+          }
+          
+          lastScrollTop = currentScrollTop;
+          requestAnimationFrame(checkScroll);
+        };
+        
+        requestAnimationFrame(checkScroll);
+      }
     }
+
+    console.log('%c🔦 All-Inclusive: Spotlight Active', 'background: #667eea; color: white; padding: 4px 8px; border-radius: 4px; font-weight: bold;');
+    console.log('Element:', element);
+    console.log('Click "Spotlight element" again to turn off spotlight mode');
   } catch (error) {
-    console.error('Error inspecting element:', error);
+    console.error('Error toggling spotlight:', error);
   }
+}
+
+// Clean up spotlight elements when toggled off
+function cleanupSpotlight() {
+  // Remove overlay by ID
+  const overlay = document.getElementById('all-inclusive-spotlight-overlay');
+  if (overlay) {
+    overlay.remove();
+  }
+  
+  // Remove bounding box by ID
+  const boundingBox = document.getElementById('all-inclusive-bounding-box');
+  if (boundingBox) {
+    boundingBox.remove();
+  }
+  
+  spotlightActive = false;
 }
 
 // Log when content script is loaded
