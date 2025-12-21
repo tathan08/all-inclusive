@@ -206,4 +206,139 @@ function getEffectiveBackgroundColor(element: HTMLElement): string | null {
   return 'rgb(255, 255, 255)';
 }
 
-export default [imageAltText, colorContrast];
+/**
+ * Check for proper heading structure
+ * WCAG 1.3.1 - Info and Relationships (Level A)
+ * WCAG 2.4.6 - Headings and Labels (Level AA)
+ */
+export const headingStructure: AccessibilityRule = {
+  id: 'heading-structure',
+  name: 'Headings must be properly structured',
+  description: 'Headings should follow a logical hierarchy without skipping levels, and pages should have an H1',
+  principle: WCAGPrinciple.PERCEIVABLE,
+  wcagCriteria: '1.3.1',
+  level: WCAGLevel.A,
+  check: (root: Element | Document): Violation[] => {
+    const violations: Violation[] = [];
+    const headings = root.querySelectorAll('h1, h2, h3, h4, h5, h6');
+    
+    // Track heading levels and their positions
+    const headingLevels: { level: number; element: HTMLHeadingElement; index: number }[] = [];
+    
+    headings.forEach((heading, index) => {
+      // Skip if element should not be checked (hidden, presentation role, etc.)
+      if (!shouldCheckElement(heading)) {
+        return;
+      }
+      
+      const htmlHeading = heading as HTMLHeadingElement;
+      const level = parseInt(htmlHeading.tagName.charAt(1), 10);
+      
+      // Check for empty headings
+      const textContent = htmlHeading.textContent?.trim();
+      if (!textContent || textContent.length === 0) {
+        const uniqueId = `violation-${Date.now()}-${index}-empty`;
+        htmlHeading.setAttribute('data-violation', uniqueId);
+        
+        violations.push({
+          id: `heading-empty-${index}`,
+          ruleId: 'heading-structure',
+          principle: WCAGPrinciple.PERCEIVABLE,
+          wcagCriteria: '2.4.6',
+          level: WCAGLevel.AA,
+          severity: Severity.SERIOUS,
+          message: 'Empty heading found',
+          description: `An ${htmlHeading.tagName} heading has no text content. Empty headings confuse screen reader users.`,
+          element: `[data-violation="${uniqueId}"]`,
+          htmlSnippet: htmlHeading.outerHTML.substring(0, 200),
+          suggestion: 'Add descriptive text to the heading or remove it if it serves no purpose.',
+          learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html',
+        });
+        return;
+      }
+      
+      headingLevels.push({ level, element: htmlHeading, index });
+    });
+    
+    // Check for missing H1
+    const h1Count = headingLevels.filter(h => h.level === 1).length;
+    if (h1Count === 0 && headingLevels.length > 0) {
+      const firstHeading = headingLevels[0].element;
+      const uniqueId = `violation-${Date.now()}-no-h1`;
+      firstHeading.setAttribute('data-violation', uniqueId);
+      
+      violations.push({
+        id: 'heading-missing-h1',
+        ruleId: 'heading-structure',
+        principle: WCAGPrinciple.PERCEIVABLE,
+        wcagCriteria: '1.3.1',
+        level: WCAGLevel.A,
+        severity: Severity.SERIOUS,
+        message: 'Page missing H1 heading',
+        description: 'This page has no H1 heading. The H1 should be used for the main page title to help users understand the page structure.',
+        element: `[data-violation="${uniqueId}"]`,
+        htmlSnippet: `First heading: ${firstHeading.outerHTML.substring(0, 200)}`,
+        suggestion: 'Add an H1 heading at the top of the page that describes the main content or purpose of the page.',
+        learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html',
+      });
+    }
+    
+    // Check for multiple H1s (often considered bad practice, though not strictly forbidden in HTML5)
+    if (h1Count > 1) {
+      headingLevels
+        .filter(h => h.level === 1)
+        .slice(1) // Skip the first H1
+        .forEach(({ element, index }) => {
+          const uniqueId = `violation-${Date.now()}-${index}-multiple-h1`;
+          element.setAttribute('data-violation', uniqueId);
+          
+          violations.push({
+            id: `heading-multiple-h1-${index}`,
+            ruleId: 'heading-structure',
+            principle: WCAGPrinciple.PERCEIVABLE,
+            wcagCriteria: '1.3.1',
+            level: WCAGLevel.A,
+            severity: Severity.MODERATE,
+            message: 'Multiple H1 headings found',
+            description: `This page has ${h1Count} H1 headings. Best practice is to have only one H1 per page to clearly identify the main topic.`,
+            element: `[data-violation="${uniqueId}"]`,
+            htmlSnippet: element.outerHTML.substring(0, 200),
+            suggestion: 'Change additional H1 headings to H2 or lower levels based on their relationship to the main heading.',
+            learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html',
+          });
+        });
+    }
+    
+    // Check for skipped heading levels
+    for (let i = 1; i < headingLevels.length; i++) {
+      const current = headingLevels[i];
+      const previous = headingLevels[i - 1];
+      const levelDifference = current.level - previous.level;
+      
+      // If we skip more than one level (e.g., H2 to H4)
+      if (levelDifference > 1) {
+        const uniqueId = `violation-${Date.now()}-${current.index}-skipped`;
+        current.element.setAttribute('data-violation', uniqueId);
+        
+        violations.push({
+          id: `heading-skipped-level-${current.index}`,
+          ruleId: 'heading-structure',
+          principle: WCAGPrinciple.PERCEIVABLE,
+          wcagCriteria: '1.3.1',
+          level: WCAGLevel.A,
+          severity: Severity.MODERATE,
+          message: `Heading level skipped from H${previous.level} to H${current.level}`,
+          description: `This H${current.level} heading follows an H${previous.level} heading, skipping ${levelDifference - 1} level(s). This breaks the document outline and confuses screen reader users.`,
+          element: `[data-violation="${uniqueId}"]`,
+          htmlSnippet: current.element.outerHTML.substring(0, 200),
+          suggestion: `Use H${previous.level + 1} instead, or restructure your headings to follow a logical hierarchy (H1 → H2 → H3, etc.).`,
+          learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html',
+        });
+      }
+    }
+    
+    return violations;
+  },
+};
+
+export default [imageAltText, colorContrast, headingStructure];

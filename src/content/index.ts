@@ -2,9 +2,10 @@ import { ScanResult, Violation, WCAGPrinciple, MessageType, Severity } from '../
 import perceivableRules from '../rules/perceivable';
 import operableRules from '../rules/operable';
 import robustRules from '../rules/robust';
+import understandableRules from '../rules/understandable';
 
 // Combine all rules
-const allRules = [...perceivableRules, ...operableRules, ...robustRules];
+const allRules = [...perceivableRules, ...operableRules, ...robustRules, ...understandableRules];
 
 /**
  * Listen for messages from popup

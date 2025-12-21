@@ -169,7 +169,7 @@ export const ariaUsage: AccessibilityRule = {
           description: 'This form input does not have an associated label, making it difficult for screen reader users to understand what information to provide.',
           element: `[data-violation="${uniqueId}"]`,
           htmlSnippet: input.outerHTML.substring(0, 200),
-          suggestion: 'Add a <label> element associated with this input using the "for" attribute, or use aria-label.',
+          suggestion: 'Add a &lt;label&gt; element associated with this input using the "for" attribute, or use aria-label.',
           learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html',
         });
       }
