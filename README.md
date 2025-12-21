@@ -103,6 +103,7 @@ npm test
 
 ### Perceivable
 - Image alt text (WCAG 1.1.1)
+- Heading structure (WCAG 1.3.1)
 - Color contrast (WCAG 1.4.3)
 
 ### Operable
@@ -127,7 +128,7 @@ npm test
 
 ### Phase 2: Enhanced Detection
 - [x] Advanced color contrast calculation with overlay detection
-- [ ] Heading structure analysis
+- [x] Heading structure analysis
 - [ ] Form validation
 - [ ] Landmark regions
 - [ ] Focus order

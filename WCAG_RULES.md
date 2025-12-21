@@ -4,7 +4,7 @@ This document lists all WCAG 2.2 accessibility rules currently validated by the 
 
 ## Current Coverage
 
-**Total Rules Implemented:** 7  
+**Total Rules Implemented:** 8  
 **WCAG Version:** 2.2  
 **Principles Covered:** 3 of 4 (Perceivable, Operable, Robust)
 
@@ -40,6 +40,67 @@ This document lists all WCAG 2.2 accessibility rules currently validated by the 
 - Use `role="presentation"` or `role="none"`
 - Are visually hidden (display: none, visibility: hidden, opacity: 0)
 - Already have accessible names via `aria-label` or `aria-labelledby`
+
+---
+
+### 1.3.1 Info and Relationships (Level A)
+**Rule ID:** `heading-structure`  
+**What it checks:** Pages must have proper heading structure and hierarchy  
+**Severity:** Serious (missing H1, empty headings) / Moderate (skipped levels, multiple H1s)  
+
+**Requirements:**
+- Page must have at least one H1 heading (page title)
+- Heading levels should not be skipped (e.g., H2 → H4)
+- Headings must contain text content
+- Best practice: Use only one H1 per page
+
+**Why it matters:**
+Screen reader users navigate by jumping between headings. A logical heading structure helps users understand page organization and find content quickly. Proper heading hierarchy creates a meaningful document outline.
+
+**Common violations:**
+- Pages without an H1 heading
+- Skipping heading levels (H2 directly to H4, H5, or H6)
+- Empty headings with no text content
+- Multiple H1 headings on a single page
+- Using heading tags for styling instead of semantic structure
+
+**Fix:**
+```html
+<!-- Bad - Missing H1 -->
+<h2>Section Title</h2>
+<h3>Subsection</h3>
+
+<!-- Bad - Skipped levels -->
+<h1>Page Title</h1>
+<h4>Subsection</h4>
+
+<!-- Bad - Empty heading -->
+<h2></h2>
+
+<!-- Bad - Multiple H1s -->
+<h1>Main Title</h1>
+<h1>Another Title</h1>
+
+<!-- Good - Proper hierarchy -->
+<h1>Page Title</h1>
+<h2>Main Section</h2>
+<h3>Subsection</h3>
+<h3>Another Subsection</h3>
+<h2>Another Main Section</h2>
+<h3>Its Subsection</h3>
+```
+
+**Best practices:**
+- Reserve H1 for the main page title
+- Use H2 for major sections
+- Use H3 for subsections within H2s
+- Don't use heading tags just for larger text (use CSS instead)
+- Headings should describe the content that follows
+
+**Learn more:** 
+- https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html
+- https://webaim.org/techniques/semanticstructure/
+- https://accessibility.psu.edu/headingshtml/
 
 ---
 
