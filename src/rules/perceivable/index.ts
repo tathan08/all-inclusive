@@ -16,6 +16,37 @@ export const imageAltText: AccessibilityRule = {
     const violations: Violation[] = [];
     const images = root.querySelectorAll('img');
 
+    // Helper function to check if image appears decorative
+    const isLikelyDecorative = (img: HTMLImageElement): boolean => {
+      // Check for decorative indicators
+      const role = img.getAttribute('role');
+      if (role === 'presentation' || role === 'none') return true;
+      
+      // Very small images are likely decorative (icons, spacers)
+      const rect = img.getBoundingClientRect();
+      if (rect.width <= 10 || rect.height <= 10) return true;
+      
+      return false;
+    };
+
+    // Helper function to check if alt text looks like a filename
+    const looksLikeFilename = (text: string): boolean => {
+      const filenamePatterns = [
+        /\.(jpg|jpeg|png|gif|svg|webp|bmp|ico)$/i,  // File extensions
+        /^(DSC|IMG|PHOTO|IMAGE)_?\d+/i,  // Camera filenames
+        /^[a-z0-9_-]{10,}\.(jpg|png|gif)/i,  // Long filename-like
+        /^(image|photo|picture|img)\d+/i,  // Generic + number
+      ];
+      return filenamePatterns.some(pattern => pattern.test(text));
+    };
+
+    // Helper function to check if alt text is generic
+    const isGenericAltText = (text: string): boolean => {
+      const genericTerms = ['image', 'photo', 'picture', 'graphic', 'img', 'icon'];
+      const normalized = text.toLowerCase().trim();
+      return genericTerms.includes(normalized);
+    };
+
     images.forEach((img, index) => {
       // Skip if element should not be checked (hidden, presentation role, etc.)
       if (!shouldCheckElement(img)) {
@@ -49,6 +80,73 @@ export const imageAltText: AccessibilityRule = {
           suggestion: 'Add an alt attribute with a descriptive text. If the image is decorative, use alt="". You can also use aria-label as an alternative.',
           learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html',
         });
+        return;
+      }
+
+      // Check for empty alt on non-decorative images
+      if (alt === '' && !isLikelyDecorative(img as HTMLImageElement)) {
+        const uniqueId = `violation-${Date.now()}-${index}-empty`;
+        img.setAttribute('data-violation', uniqueId);
+        
+        violations.push({
+          id: `image-alt-empty-${index}`,
+          ruleId: 'image-alt-text',
+          principle: WCAGPrinciple.PERCEIVABLE,
+          wcagCriteria: '1.1.1',
+          level: WCAGLevel.A,
+          severity: Severity.SERIOUS,
+          message: 'Non-decorative image has empty alt text',
+          description: 'This image appears to be meaningful but has an empty alt attribute. Screen reader users will not be able to understand what this image conveys.',
+          element: `[data-violation="${uniqueId}"]`,
+          htmlSnippet: img.outerHTML.substring(0, 200),
+          suggestion: 'Add descriptive alt text that conveys the purpose and content of the image. If the image is truly decorative, consider adding role="presentation".',
+          learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html',
+        });
+        return;
+      }
+
+      // Check for poor quality alt text (filenames, generic terms)
+      if (alt && alt.trim().length > 0) {
+        if (looksLikeFilename(alt)) {
+          const uniqueId = `violation-${Date.now()}-${index}-filename`;
+          img.setAttribute('data-violation', uniqueId);
+          
+          violations.push({
+            id: `image-alt-filename-${index}`,
+            ruleId: 'image-alt-text',
+            principle: WCAGPrinciple.PERCEIVABLE,
+            wcagCriteria: '1.1.1',
+            level: WCAGLevel.A,
+            severity: Severity.MODERATE,
+            message: 'Image alt text appears to be a filename',
+            description: `The alt text "${alt}" looks like a filename, which is not helpful for screen reader users.`,
+            element: `[data-violation="${uniqueId}"]`,
+            htmlSnippet: img.outerHTML.substring(0, 200),
+            suggestion: 'Replace the filename with descriptive text that explains what the image shows or its purpose in the context of the page.',
+            learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html',
+          });
+          return;
+        }
+
+        if (isGenericAltText(alt)) {
+          const uniqueId = `violation-${Date.now()}-${index}-generic`;
+          img.setAttribute('data-violation', uniqueId);
+          
+          violations.push({
+            id: `image-alt-generic-${index}`,
+            ruleId: 'image-alt-text',
+            principle: WCAGPrinciple.PERCEIVABLE,
+            wcagCriteria: '1.1.1',
+            level: WCAGLevel.A,
+            severity: Severity.MODERATE,
+            message: 'Image alt text is too generic',
+            description: `The alt text "${alt}" is too generic and doesn't describe the specific content of the image.`,
+            element: `[data-violation="${uniqueId}"]`,
+            htmlSnippet: img.outerHTML.substring(0, 200),
+            suggestion: 'Use descriptive alt text that specifically describes what the image shows or its purpose. Generic terms like "image" or "photo" are not helpful.',
+            learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html',
+          });
+        }
       }
     });
 
@@ -226,15 +324,11 @@ export const headingStructure: AccessibilityRule = {
     const headingLevels: { level: number; element: HTMLHeadingElement; index: number }[] = [];
     
     headings.forEach((heading, index) => {
-      // Skip if element should not be checked (hidden, presentation role, etc.)
-      if (!shouldCheckElement(heading)) {
-        return;
-      }
-      
       const htmlHeading = heading as HTMLHeadingElement;
       const level = parseInt(htmlHeading.tagName.charAt(1), 10);
       
-      // Check for empty headings
+      // Check for empty headings BEFORE shouldCheckElement
+      // Empty headings might be filtered out by visibility checks
       const textContent = htmlHeading.textContent?.trim();
       if (!textContent || textContent.length === 0) {
         const uniqueId = `violation-${Date.now()}-${index}-empty`;
@@ -254,6 +348,11 @@ export const headingStructure: AccessibilityRule = {
           suggestion: 'Add descriptive text to the heading or remove it if it serves no purpose.',
           learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/info-and-relationships.html',
         });
+        return;
+      }
+      
+      // Skip if element should not be checked (hidden, presentation role, etc.)
+      if (!shouldCheckElement(heading)) {
         return;
       }
       
