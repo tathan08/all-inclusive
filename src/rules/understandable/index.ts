@@ -41,8 +41,36 @@ export const formLabels: AccessibilityRule = {
         hasLabel = true;
       }
       
+      // Check if input has aria-label/aria-labelledby but no visible label
+      const hasAriaLabel = hasAccessibleName(input);
+      
+      // Flag inputs with only aria-label as moderate violation (best practice)
+      if (!hasLabel && hasAriaLabel) {
+        const uniqueId = `violation-${Date.now()}-${index}-aria-only`;
+        input.setAttribute('data-violation', uniqueId);
+        
+        const inputName = input.getAttribute('name') || 'unknown';
+        const ariaLabel = input.getAttribute('aria-label') || '';
+        
+        violations.push({
+          id: `form-label-aria-only-${index}`,
+          ruleId: 'form-labels',
+          principle: WCAGPrinciple.UNDERSTANDABLE,
+          wcagCriteria: '3.3.2',
+          level: WCAGLevel.A,
+          severity: Severity.MODERATE,
+          message: 'Form input has aria-label but no visible label',
+          description: `This ${type} input (name: "${inputName}") uses aria-label="${ariaLabel}" but lacks a visible label. While screen readers can access this, visible labels benefit all users including those with cognitive disabilities, and provide larger click targets.`,
+          element: `[data-violation="${uniqueId}"]`,
+          htmlSnippet: input.outerHTML.substring(0, 200),
+          suggestion: 'Add a visible &lt;label&gt; element. You can keep the aria-label as supplementary information if needed.',
+          learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/labels-or-instructions.html',
+        });
+        return; // Skip the critical violation check
+      }
+      
       // Skip if input has accessible name via aria-label/aria-labelledby
-      if (!hasLabel && hasAccessibleName(input)) {
+      if (!hasLabel && hasAriaLabel) {
         return;
       }
       
