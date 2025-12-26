@@ -8,11 +8,10 @@ const ImageAltTextTests: React.FC<ImageAltTextTestsProps> = ({ ruleNumber }) => 
   return (
     <div className="test-section">
       <h3>{ruleNumber ? `${ruleNumber}. ` : ''}Image Alt Text Violations</h3>
-
       <div className="violation">
         <span className="violation-label">Missing alt attribute:</span>
         <img 
-          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100'%3E%3Crect fill='%23ff6b6b' width='200' height='100'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='white'%3ENo Alt%3C/text%3E%3C/svg%3E"
+          src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100'%3E%3Crect fill='%23ff6b6b' width='200' height='100'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle'%3ENo Alt%3C/text%3E%3C/svg%3E"
           width="200"
           height="100"
         />

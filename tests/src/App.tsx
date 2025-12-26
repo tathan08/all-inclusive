@@ -62,7 +62,7 @@ const App: React.FC = () => {
         <h1>Accessibility Test Page</h1>
         <p>This page contains intentional accessibility violations to test the All-Inclusive WCAG checker extension.</p>
         {filter !== 'all' && (
-          <p style={{ marginTop: '10px', padding: '10px', backgroundColor: '#e3f2fd', borderRadius: '4px', color: '#1976d2' }}>
+          <p style={{ marginTop: '10px', padding: '10px', backgroundColor: '#e3f2fd', borderRadius: '4px', color: '#0d47a1' }}>
             <strong>Filter Active:</strong> Showing {filterLabel} tests only
           </p>
         )}
