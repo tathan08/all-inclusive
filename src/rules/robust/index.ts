@@ -92,7 +92,23 @@ export const ariaUsage: AccessibilityRule = {
         return;
       }
       
-      const text = (button.textContent || '').trim();
+      // Get visible text (excluding aria-hidden elements)
+      const getVisibleText = (element: Element): string => {
+        let text = '';
+        element.childNodes.forEach(node => {
+          if (node.nodeType === Node.TEXT_NODE) {
+            text += node.textContent || '';
+          } else if (node.nodeType === Node.ELEMENT_NODE) {
+            const el = node as Element;
+            if (el.getAttribute('aria-hidden') !== 'true') {
+              text += getVisibleText(el);
+            }
+          }
+        });
+        return text.trim();
+      };
+      
+      const text = getVisibleText(button);
       
       // Check if button has inner elements with accessible names
       const hasInnerAccessibleContent = 
@@ -101,7 +117,7 @@ export const ariaUsage: AccessibilityRule = {
         button.querySelector('[aria-labelledby]');
       
       // Button is accessible if it has:
-      // 1. Visible text content
+      // 1. Visible text content (excluding aria-hidden)
       // 2. aria-label or aria-labelledby (checked via hasAccessibleName)
       // 3. Inner elements with accessible content
       if (text || hasAccessibleName(button) || hasInnerAccessibleContent) {
@@ -125,54 +141,6 @@ export const ariaUsage: AccessibilityRule = {
         suggestion: 'Add visible text inside the button, or use aria-label to provide an accessible name.',
         learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html',
       });
-    });
-    
-    // Check form inputs for labels
-    const inputs = root.querySelectorAll('input:not([type="hidden"]):not([type="submit"]):not([type="button"]), textarea, select');
-    inputs.forEach((input, index) => {
-      // Skip if element should not be checked (hidden, presentation role, etc.)
-      if (!shouldCheckElement(input)) {
-        return;
-      }
-      
-      const id = input.getAttribute('id');
-      
-      let hasLabel = false;
-      
-      if (id) {
-        const label = root.querySelector(`label[for="${id}"]`);
-        hasLabel = !!label;
-      }
-      
-      const parentLabel = input.closest('label');
-      if (parentLabel) {
-        hasLabel = true;
-      }
-      
-      // Skip if input has accessible name via aria-label/aria-labelledby
-      if (!hasLabel && hasAccessibleName(input)) {
-        return;
-      }
-      
-      if (!hasLabel && !hasAccessibleName(input)) {
-        const uniqueId = `violation-${Date.now()}-input-${index}`;
-        input.setAttribute('data-violation', uniqueId);
-        
-        violations.push({
-          id: `input-no-label-${index}`,
-          ruleId: 'aria-usage',
-          principle: WCAGPrinciple.ROBUST,
-          wcagCriteria: '4.1.2',
-          level: WCAGLevel.A,
-          severity: Severity.CRITICAL,
-          message: 'Form input has no label',
-          description: 'This form input does not have an associated label, making it difficult for screen reader users to understand what information to provide.',
-          element: `[data-violation="${uniqueId}"]`,
-          htmlSnippet: input.outerHTML.substring(0, 200),
-          suggestion: 'Add a &lt;label&gt; element associated with this input using the "for" attribute, or use aria-label.',
-          learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html',
-        });
-      }
     });
 
     return violations;
