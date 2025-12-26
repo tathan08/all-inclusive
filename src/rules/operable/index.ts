@@ -143,6 +143,20 @@ export const bypassBlocks: AccessibilityRule = {
   check: (root: Element | Document): Violation[] => {
     const violations: Violation[] = [];
     
+    // Only check pages that have significant navigation structures
+    // A page needs skip links when it has:
+    // - A <nav> element with multiple links, OR
+    // - A header with a navigation menu (multiple links in header)
+    const navElement = root.querySelector('nav');
+    const hasNavigation = navElement && navElement.querySelectorAll('a').length > 3;
+    
+    const headerElement = root.querySelector('header');
+    const hasHeaderNav = headerElement && headerElement.querySelectorAll('nav, a').length > 3;
+    
+    if (!hasNavigation && !hasHeaderNav) {
+      return violations; // No significant navigation to bypass
+    }
+    
     // Check for skip links
     const skipLink = root.querySelector('a[href^="#"]:first-of-type');
     const hasSkipLink = skipLink && (
