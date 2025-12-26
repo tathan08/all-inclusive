@@ -2,6 +2,7 @@ import { ScanResult, Violation, MessageType, Severity } from '../types';
 
 // DOM Elements
 const scanButton = document.getElementById('scanButton') as HTMLButtonElement;
+const exportButton = document.getElementById('exportButton') as HTMLButtonElement;
 const loading = document.getElementById('loading') as HTMLDivElement;
 const results = document.getElementById('results') as HTMLElement;
 const emptyState = document.getElementById('emptyState') as HTMLElement;
@@ -26,6 +27,7 @@ let currentScanResult: ScanResult | null = null;
  */
 async function init() {
   scanButton.addEventListener('click', handleScan);
+  exportButton.addEventListener('click', handleExport);
   
   // Add filter listeners
   [filterCritical, filterSerious, filterModerate, filterMinor].forEach(filter => {
@@ -280,7 +282,43 @@ function createViolationCard(violation: Violation, index: number): HTMLElement {
   return card;
 }
 
+/**Handle export button click
+ */
+function handleExport() {
+  if (!currentScanResult) {
+    return;
+  }
+
+  // Create export data
+  const exportData = {
+    timestamp: new Date().toISOString(),
+    url: currentScanResult.url || 'unknown',
+    summary: currentScanResult.summary,
+    violations: currentScanResult.violations
+  };
+
+  // Convert to JSON
+  const jsonString = JSON.stringify(exportData, null, 2);
+  
+  // Create blob and download
+  const blob = new Blob([jsonString], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  
+  // Generate filename with timestamp
+  const date = new Date().toISOString().split('T')[0];
+  const time = new Date().toTimeString().split(' ')[0].replace(/:/g, '-');
+  a.download = `accessibility-report-${date}-${time}.json`;
+  
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
 /**
+ * 
  * Open DevTools and inspect the element
  */
 async function inspectElement(elementSelector: string) {
