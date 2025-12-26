@@ -118,10 +118,3 @@ To add a new rule test:
 4. Click the extension icon to scan for violations
 5. Verify all expected violations are detected
 6. Test the spotlight feature on individual violations
-
-## Playwright Testing
-
-This test suite is structured to support automated Playwright tests:
-- Each component can be tested individually
-- Consistent HTML structure for easy selector targeting
-- Clear violation labels for assertion matching
