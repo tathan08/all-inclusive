@@ -12,9 +12,12 @@ const FocusOrderTests: React.FC<FocusOrderTestsProps> = ({ ruleNumber }) => {
       <div className="violation">
         <span className="violation-label">Positive tabindex values:</span>
         <div>
-          <input type="text" placeholder="Field 1 (tabindex=3)" tabIndex={3} />
-          <input type="text" placeholder="Field 2 (tabindex=1)" tabIndex={1} />
-          <input type="text" placeholder="Field 3 (tabindex=2)" tabIndex={2} />
+          <label htmlFor="focus-field1">Field 1:</label>
+          <input id="focus-field1" type="text" placeholder="Field 1 (tabindex=3)" tabIndex={3} />
+          <label htmlFor="focus-field2">Field 2:</label>
+          <input id="focus-field2" type="text" placeholder="Field 2 (tabindex=1)" tabIndex={1} />
+          <label htmlFor="focus-field3">Field 3:</label>
+          <input id="focus-field3" type="text" placeholder="Field 3 (tabindex=2)" tabIndex={2} />
         </div>
       </div>
 
