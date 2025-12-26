@@ -51,6 +51,48 @@ export const keyboardAccessible: AccessibilityRule = {
         }
       }
     });
+    
+    // Also check for elements with React onClick handlers (cursor: pointer style)
+    // React onClick doesn't create onclick attributes, so we detect by cursor style
+    const cursorPointerElements = root.querySelectorAll('div, span');
+    cursorPointerElements.forEach((element, index) => {
+      // Skip if element should not be checked
+      if (!shouldCheckElement(element)) {
+        return;
+      }
+      
+      const htmlElement = element as HTMLElement;
+      const computedStyle = window.getComputedStyle(htmlElement);
+      const tagName = element.tagName.toLowerCase();
+      const tabindex = element.getAttribute('tabindex');
+      
+      // Check if has pointer cursor (common for clickable React elements)
+      if (computedStyle.cursor === 'pointer') {
+        // If it's not naturally focusable and doesn't have proper tabindex
+        if (tabindex === null || parseInt(tabindex) < 0) {
+          // Avoid duplicates from the earlier check
+          if (!element.hasAttribute('data-violation')) {
+            const uniqueId = `violation-${Date.now()}-react-${index}`;
+            element.setAttribute('data-violation', uniqueId);
+            
+            violations.push({
+              id: `keyboard-react-${index}`,
+              ruleId: 'keyboard-accessible',
+              principle: WCAGPrinciple.OPERABLE,
+              wcagCriteria: '2.1.1',
+              level: WCAGLevel.A,
+              severity: Severity.SERIOUS,
+              message: 'Interactive element not keyboard accessible',
+              description: `This ${tagName} element appears to be clickable (cursor: pointer) but cannot be accessed via keyboard.`,
+              element: `[data-violation="${uniqueId}"]`,
+              htmlSnippet: element.outerHTML.substring(0, 200),
+              suggestion: `Add tabindex="0" and onKeyDown/onKeyUp handlers for Enter and Space keys, or use a <button> element instead.`,
+              learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html',
+            });
+          }
+        }
+      }
+    });
 
     return violations;
   },
@@ -203,38 +245,13 @@ export const focusOrder: AccessibilityRule = {
     const elementsWithTabindex = root.querySelectorAll('[tabindex]');
     
     elementsWithTabindex.forEach((element, index) => {
-      // Skip if element should not be checked (hidden, presentation role, etc.)
-      if (!shouldCheckElement(element)) {
-        return;
-      }
-      
       const tabindexValue = element.getAttribute('tabindex');
       const tabindexNum = parseInt(tabindexValue || '0', 10);
       const tagName = element.tagName.toLowerCase();
       const computedStyle = window.getComputedStyle(element as HTMLElement);
       
-      // Check for positive tabindex (bad practice)
-      if (tabindexNum > 0) {
-        const uniqueId = `violation-${Date.now()}-${index}-positive`;
-        element.setAttribute('data-violation', uniqueId);
-        
-        violations.push({
-          id: `focus-positive-tabindex-${index}`,
-          ruleId: 'focus-order',
-          principle: WCAGPrinciple.OPERABLE,
-          wcagCriteria: '2.4.3',
-          level: WCAGLevel.A,
-          severity: Severity.SERIOUS,
-          message: `Element has positive tabindex="${tabindexNum}"`,
-          description: `This ${tagName} element has tabindex="${tabindexNum}". Positive tabindex values disrupt the natural tab order and are considered bad practice. They make it difficult for keyboard users to navigate predictably.`,
-          element: `[data-violation="${uniqueId}"]`,
-          htmlSnippet: element.outerHTML.substring(0, 200),
-          suggestion: 'Remove the tabindex attribute if this is a naturally focusable element, or change to tabindex="0" to include it in the natural tab order without disrupting the sequence.',
-          learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/focus-order.html',
-        });
-      }
-      
-      // Check for focusable but hidden elements
+      // Check for focusable but hidden elements FIRST (before shouldCheckElement)
+      // This is important because hidden elements should be flagged if they're focusable
       if (tabindexNum >= 0) {
         const isHidden = 
           computedStyle.display === 'none' || 
@@ -256,10 +273,37 @@ export const focusOrder: AccessibilityRule = {
             description: `This ${tagName} element has tabindex="${tabindexValue}" but is visually hidden (display: ${computedStyle.display}, visibility: ${computedStyle.visibility}, opacity: ${computedStyle.opacity}). This can confuse keyboard users who tab to invisible elements.`,
             element: `[data-violation="${uniqueId}"]`,
             htmlSnippet: element.outerHTML.substring(0, 200),
-            suggestion: 'Either remove the element from the tab order (use tabindex="-1" or remove tabindex), or make the element visible. If this is intentional for skip links, ensure proper focus styles are applied.',
+            suggestion: 'Either remove the tabindex attribute to make it unfocusable, or make the element visible. If it needs to be visually hidden but accessible, use CSS that keeps it in the accessibility tree (e.g., position: absolute with clip).',
             learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/focus-order.html',
           });
+          return; // Skip other checks for this element
         }
+      }
+      
+      // Skip if element should not be checked (hidden, presentation role, etc.)
+      if (!shouldCheckElement(element)) {
+        return;
+      }
+      
+      // Check for positive tabindex (bad practice)
+      if (tabindexNum > 0) {
+        const uniqueId = `violation-${Date.now()}-${index}-positive`;
+        element.setAttribute('data-violation', uniqueId);
+        
+        violations.push({
+          id: `focus-positive-tabindex-${index}`,
+          ruleId: 'focus-order',
+          principle: WCAGPrinciple.OPERABLE,
+          wcagCriteria: '2.4.3',
+          level: WCAGLevel.A,
+          severity: Severity.SERIOUS,
+          message: `Element has positive tabindex="${tabindexNum}"`,
+          description: `This ${tagName} element has tabindex="${tabindexNum}". Positive tabindex values disrupt the natural tab order and are considered bad practice. They make it difficult for keyboard users to navigate predictably.`,
+          element: `[data-violation="${uniqueId}"]`,
+          htmlSnippet: element.outerHTML.substring(0, 200),
+          suggestion: 'Remove the tabindex attribute if this is a naturally focusable element, or change to tabindex="0" to include it in the natural tab order without disrupting the sequence.',
+          learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/focus-order.html',
+        });
       }
       
       // Check for negative tabindex on native interactive elements
