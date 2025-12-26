@@ -7,13 +7,19 @@ A Chrome extension for automated WCAG accessibility auditing. Inspect any websit
 - **Automated WCAG Scanning**: Checks websites against WCAG 2.2 guidelines (Levels A, AA, AAA)
 - **Real-time Analysis**: Scan any page with a single click
 - **Categorized Results**: Issues organized by WCAG principles:
-  - **Perceivable**: Images, color contrast, text alternatives
-  - **Operable**: Keyboard navigation, links, skip links
-  - **Understandable**: Clear language / Predictable
-  - **Robust**: Valid HTML, ARIA usage, form labels
+  - **Perceivable**: Images, color contrast, text alternatives, heading structure
+  - **Operable**: Keyboard navigation, links, skip links, focus order
+  - **Understandable**: Form labels, fieldsets, required fields
+  - **Robust**: Valid HTML, ARIA usage, accessible names
 - **Severity Levels**: Critical, Serious, Moderate, and Minor issues
 - **Actionable Suggestions**: Each violation includes fix suggestions and WCAG documentation links
 - **Filtering**: Filter results by severity level
+- **Advanced Detection**:
+  - Enhanced image alt text validation (empty alt, filename detection, generic text)
+  - Color contrast with overlay detection
+  - React component support (onClick handlers detected)
+  - Empty and aria-hidden content detection
+  - Visible label validation (aria-label-only inputs flagged)
 
 ## Project Structure
 
@@ -55,7 +61,7 @@ all-inclusive/
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/yourusername/all-inclusive.git
+   git clone https://github.com/tathan08/all-inclusive.git
    cd all-inclusive
    ```
 
@@ -97,54 +103,61 @@ npm test
 5. **Filter** by severity if needed
 6. **Read** suggestions and fix the issues
 
-## Current Rules (MVP)
+## Current Rules
 
 **For detailed documentation of all rules, see [WCAG_RULES.md](WCAG_RULES.md)**
 
 ### Perceivable
-- Image alt text (WCAG 1.1.1)
-- Heading structure (WCAG 1.3.1)
-- Color contrast (WCAG 1.4.3)
+- **Image alt text** (WCAG 1.1.1)
+  - Missing alt attributes
+  - Empty alt on meaningful images
+  - Filename-like alt text detection
+  - Generic alt text detection ("image", "photo", etc.)
+- **Heading structure** (WCAG 1.3.1)
+  - Empty headings detection
+  - Skipped heading levels
+  - Multiple H1 warnings
+  - Missing H1 detection
+- **Color contrast** (WCAG 1.4.3)
+  - Overlay detection for accurate contrast calculation
+  - Support for transparent/semi-transparent backgrounds
+  - Large text detection (18pt+)
 
 ### Operable
-- Keyboard accessibility (WCAG 2.1.1)
-- Link purpose (WCAG 2.4.4)
-- Skip navigation (WCAG 2.4.1)
-- Focus order (WCAG 2.4.3)
+- **Keyboard accessibility** (WCAG 2.1.1)
+  - Detects non-keyboard-accessible divs/spans
+  - React onClick handler detection (cursor: pointer)
+  - Missing tabindex or keyboard event handlers
+- **Link purpose** (WCAG 2.4.4)
+  - Vague link text detection ("click here", "read more", "here")
+  - Empty link detection
+- **Skip navigation** (WCAG 2.4.1)
+  - Smart detection (only checks pages with actual navigation)
+  - Requires nav element with 3+ links or header with navigation
+- **Focus order** (WCAG 2.4.3)
+  - Positive tabindex detection
+  - Hidden but focusable elements
+  - Native interactive elements removed from tab order
 
 ### Understandable
-- Form labels (WCAG 3.3.2)
-- Fieldset and legend (WCAG 1.3.1)
-- Required fields (WCAG 3.3.2)
+- **Form labels** (WCAG 3.3.2)
+  - Missing label detection
+  - aria-label-only inputs flagged (moderate severity)
+  - Visible label requirement for inclusivity
+- **Fieldset and legend** (WCAG 1.3.1)
+  - Radio button groups (serious)
+  - Checkbox groups with 3+ items (moderate)
+- **Required fields** (WCAG 3.3.2)
+  - Visual-only indicators detected
+  - Missing required/aria-required attributes
 
 ### Robust
-- Valid HTML - duplicate IDs (WCAG 4.1.1)
-- ARIA usage - buttons and form labels (WCAG 4.1.2)
-
-## Roadmap
-
-### Phase 1: MVP
-- [x] Basic popup UI
-- [x] Page scanning
-- [x] Core WCAG rules
-- [x] Results display
-
-### Phase 2: Enhanced Detection (Current)
-- [x] Advanced color contrast calculation with overlay detection
-- [x] Heading structure analysis
-- [x] Form validation
-- [x] Focus order
-
-### Phase 3: Visual Overlay
-- [ ] Highlight violations on page with numbered tags
-- [ ] Gray overlay mode with spotlight
-- [ ] Click-to-highlight from popup
-
-### Phase 4: AI-Powered Suggestions
-- [ ] Automated fix generation
-- [ ] Code snippets for fixes
-- [ ] Before/after previews
-- [ ] Batch fix suggestions
+- **Valid HTML** (WCAG 4.1.1)
+  - Duplicate ID detection with usage count
+- **ARIA usage** (WCAG 4.1.2)
+  - Buttons without accessible names
+  - aria-hidden content handling
+  - Visible text detection (excludes aria-hidden elements)
 
 ## Acknowledgments
 

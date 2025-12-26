@@ -15,22 +15,51 @@ This document lists all WCAG 2.2 accessibility rules currently validated by the 
 
 ### 1.1.1 Non-text Content (Level A)
 **Rule ID:** `image-alt-text`  
-**What it checks:** All `<img>` elements must have an `alt` attribute  
-**Severity:** Critical  
+**What it checks:** All `<img>` elements must have meaningful alt text  
+**Severity:** Critical (missing alt), Serious (empty alt on meaningful images), Moderate (filename/generic text)  
+
+**Enhanced Detection:**
+1. **Missing alt attribute** (Critical) - Images without any alt attribute
+2. **Empty alt on meaningful images** (Serious) - Non-decorative images with alt=""
+3. **Filename-like alt text** (Moderate) - Alt text that looks like a filename (e.g., "image_final_v2.jpg")
+4. **Generic alt text** (Moderate) - Unhelpful text like "image", "photo", "picture", "graphic"
+
+**Decorative Image Detection:**
+The rule considers images decorative if they:
+- Are small (< 10x10 pixels)
+- Have `role="presentation"` or `role="none"`
+- Are inside links/buttons that already have text
+- Are CSS background images
+
 **Common violations:**
-- Images without alt attributes
-- Missing alt text on informative images
+```html
+<!-- Critical - No alt attribute -->
+<img src="logo.png">
+
+<!-- Serious - Empty alt on meaningful image -->
+<img src="product.png" alt="">
+
+<!-- Moderate - Filename as alt text -->
+<img src="header.png" alt="header_final_v2.jpg">
+
+<!-- Moderate - Generic alt text -->
+<img src="team.png" alt="image">
+```
 
 **Fix:**
 ```html
-<!-- Bad -->
-<img src="logo.png">
-
-<!-- Good -->
+<!-- Good - Descriptive alt text -->
 <img src="logo.png" alt="Company Logo">
+<img src="product.png" alt="Blue wireless headphones with noise cancellation">
 
-<!-- Decorative -->
-<img src="decorative.png" alt="">
+<!-- Good - Decorative image -->
+<img src="decorative.png" alt="" role="presentation">
+
+<!-- Good - Image in link with text -->
+<a href="/home">
+  <img src="logo.png" alt="">
+  <span>Home</span>
+</a>
 ```
 
 **Learn more:** https://www.w3.org/WAI/WCAG22/Understanding/non-text-content.html
@@ -147,20 +176,35 @@ Screen reader users navigate by jumping between headings. A logical heading stru
 **Rule ID:** `keyboard-accessible`  
 **What it checks:** All interactive elements must be keyboard accessible  
 **Severity:** Serious  
+
+**Enhanced Detection:**
+1. **Elements with onclick/ng-click/v-on:click attributes** - Traditional event handlers
+2. **React components with cursor: pointer** - Detects React onClick handlers by inspecting computed styles
+
+**Why this matters:**
+React's `onClick` doesn't create HTML `onclick` attributes, making traditional detection insufficient. This rule uses `cursor: pointer` as a heuristic to identify clickable React components.
+
 **Common violations:**
-- `<div>` or `<span>` with click handlers but no keyboard support
-- Custom controls without `tabindex` or keyboard event handlers
-- Elements with `onclick` but missing keyboard equivalents
+```html
+<!-- Bad - onclick attribute -->
+<div onclick="handleClick()">Click me</div>
+
+<!-- Bad - React onClick (renders with cursor: pointer) -->
+<div onClick={handleClick} style={{ cursor: 'pointer' }}>Click me</div>
+
+<!-- Bad - Span with click handler -->
+<span style="cursor: pointer" onclick="alert('clicked')">Click</span>
+```
 
 **Fix:**
 ```html
-<!-- Bad -->
-<div onclick="handleClick()">Click me</div>
-
-<!-- Good -->
+<!-- Good - Native button -->
 <button onclick="handleClick()">Click me</button>
 
-<!-- Also Good -->
+<!-- Good - React button -->
+<button onClick={handleClick}>Click me</button>
+
+<!-- Good - Custom element with full accessibility -->
 <div 
   role="button" 
   tabindex="0" 
@@ -168,6 +212,26 @@ Screen reader users navigate by jumping between headings. A logical heading stru
   onkeydown="handleKeyPress(event)">
   Click me
 </div>
+
+<!-- Good - React custom element -->
+<div
+  role="button"
+  tabIndex={0}
+  onClick={handleClick}
+  onKeyDown={handleKeyPress}
+  style={{ cursor: 'pointer' }}>
+  Click me
+</div>
+```
+
+**Keyboard event handler example:**
+```javascript
+function handleKeyPress(event) {
+  if (event.key === 'Enter' || event.key === ' ') {
+    event.preventDefault();
+    handleClick();
+  }
+}
 ```
 
 **Learn more:** https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html
@@ -176,10 +240,18 @@ Screen reader users navigate by jumping between headings. A logical heading stru
 
 ### 2.4.1 Bypass Blocks (Level A)
 **Rule ID:** `bypass-blocks`  
-**What it checks:** Pages should have a mechanism to skip repetitive content  
+**What it checks:** Pages with navigation should have a mechanism to skip repetitive content  
 **Severity:** Moderate  
+
+**Smart Detection:**
+Only checks pages that have significant navigation:
+- Pages with a `<nav>` element containing 3+ links, OR
+- Pages with a `<header>` containing 3+ navigation items
+
+This avoids false positives on simple test pages or single-page apps without repetitive navigation.
+
 **Common violations:**
-- Missing "Skip to main content" links
+- Missing "Skip to main content" links on pages with navigation
 - No bypass mechanism for repeated navigation
 
 **Fix:**
@@ -304,24 +376,36 @@ Screen reader users navigate by jumping between headings. A logical heading stru
 ### 3.3.2 Labels or Instructions (Level A)
 **Rule ID:** `form-labels`  
 **What it checks:** All form inputs must have associated labels or instructions  
-**Severity:** Critical  
+**Severity:** Critical (no label), Moderate (aria-label only, no visible label)  
+
 **Requirements:**
 - All form fields must have labels that describe their purpose
 - Labels must be programmatically associated with their controls
+- **Visible labels are strongly preferred** for inclusivity
 - Instructions must be clear and available to all users
 
+**Enhanced Detection:**
+1. **Missing labels** (Critical) - No label, aria-label, or aria-labelledby
+2. **aria-label only, no visible label** (Moderate) - Has aria-label but no visible `<label>` element
+
+**Why visible labels matter:**
+- Larger click targets for users with motor impairments
+- Visual cues for users with cognitive disabilities
+- Benefits users who don't use screen readers
+- Complies with WCAG 2.5.3 (Label in Name)
+
 **Common violations:**
-- Input fields without `<label>` elements
-- Labels not associated via `for` attribute
-- No aria-label or aria-labelledby on unlabeled inputs
-- Missing instructions for complex inputs
+```html
+<!-- Critical - No label at all -->
+<input type="text" name="email">
+
+<!-- Moderate - aria-label only -->
+<input type="text" name="email" aria-label="Email Address">
+```
 
 **Fix:**
 ```html
-<!-- Bad -->
-<input type="text" name="email">
-
-<!-- Good - Label with for attribute -->
+<!-- Best - Visible label with for attribute -->
 <label for="email">Email Address:</label>
 <input type="text" id="email" name="email">
 
@@ -331,8 +415,9 @@ Screen reader users navigate by jumping between headings. A logical heading stru
   <input type="text" name="email">
 </label>
 
-<!-- Good - ARIA label -->
-<input type="text" name="email" aria-label="Email Address">
+<!-- Acceptable - aria-label as supplement -->
+<label for="email">Email:</label>
+<input type="text" id="email" name="email" aria-label="Email Address (required)">
 ```
 
 **Learn more:** 
@@ -462,42 +547,55 @@ Screen reader users navigate by jumping between headings. A logical heading stru
 
 ### 4.1.2 Name, Role, Value (Level A)
 **Rule ID:** `aria-usage`  
-**What it checks:** All UI components must have accessible names and proper ARIA usage  
+**What it checks:** All UI components must have accessible names  
 **Severity:** Critical  
+
+**Enhanced Detection:**
+1. **Buttons without accessible names** - Including buttons with only `aria-hidden` content
+2. **Visible text extraction** - Excludes text inside elements with `aria-hidden="true"`
+
+**Why aria-hidden matters:**
+Content with `aria-hidden="true"` is hidden from screen readers, so it doesn't provide an accessible name even if visually present.
+
 **Common violations:**
-- Buttons without accessible names
-- Form inputs without labels
-- Missing `aria-label` or `aria-labelledby` on icon buttons
-- Form fields without associated `<label>` elements
+```html
+<!-- Bad - Empty button -->
+<button></button>
+
+<!-- Bad - Only aria-hidden content -->
+<button>
+  <span aria-hidden="true">×</span>
+</button>
+
+<!-- Bad - Icon without accessible name -->
+<button>
+  <svg><!-- Close icon --></svg>
+</button>
+```
 
 **Fix:**
 ```html
-<!-- Bad - button with no accessible name -->
-<button>
-  <svg><!-- Icon --></svg>
-</button>
+<!-- Good - Visible text -->
+<button>Close</button>
 
-<!-- Good - button with aria-label -->
+<!-- Good - aria-label for icon buttons -->
 <button aria-label="Close dialog">
-  <svg><!-- Close icon --></svg>
+  <span aria-hidden="true">×</span>
 </button>
 
-<!-- Bad - input without label -->
-<input type="text" placeholder="Enter name">
+<!-- Good - Image with alt text -->
+<button>
+  <img src="close.svg" alt="Close">
+</button>
 
-<!-- Good - input with label -->
-<label for="name">Name:</label>
-<input id="name" type="text">
-
-<!-- Also Good - wrapped in label -->
-<label>
-  Name:
-  <input type="text">
-</label>
-
-<!-- Good - using aria-label -->
-<input type="text" aria-label="Search">
+<!-- Good - Visually hidden text -->
+<button>
+  <span aria-hidden="true">×</span>
+  <span class="sr-only">Close dialog</span>
+</button>
 ```
+
+**Note:** Form input label checking has been moved to the `form-labels` rule (understandable principle) to avoid duplication.
 
 **Learn more:** https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html
 
@@ -505,11 +603,20 @@ Screen reader users navigate by jumping between headings. A logical heading stru
 
 ## Implementation Summary by WCAG Level
 
-| Level | Rules Implemented | Percentage of Common Issues |
-|-------|------------------|----------------------------|
-| **A** | 6 rules | ~60% of critical issues |
-| **AA** | 1 rule | ~85% when combined with A |
+| Level | Rules | Principle Breakdown |
+|-------|-------|---------------------|
+| **A** | 11 rules | **Perceivable:** 2 (image-alt-text, heading-structure)<br>**Operable:** 4 (keyboard-accessible, bypass-blocks, link-purpose, focus-order)<br>**Understandable:** 3 (form-labels, fieldset-legend, required-fields)<br>**Robust:** 2 (valid-html, aria-usage) |
+| **AA** | 1 rule | **Perceivable:** 1 (color-contrast) |
 | **AAA** | 0 rules | Future enhancement |
+| **Total** | **12 rules** | Covers all 4 WCAG principles (POUR) |
+
+### Coverage Analysis
+- ✅ **Perceivable:** 3/13 common rules (~23%)
+- ✅ **Operable:** 4/17 common rules (~24%)
+- ✅ **Understandable:** 3/15 common rules (~20%)
+- ✅ **Robust:** 2/4 common rules (~50%)
+
+**Focus:** Critical Level A and AA rules that catch the most common accessibility issues, including form accessibility, keyboard navigation, semantic structure, and color contrast.
 
 ---
 

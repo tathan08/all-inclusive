@@ -34,7 +34,11 @@ npm install
 ### Development Server
 Run the test page with hot reload:
 ```bash
-npm run dev
+npm run dev          # All principles (31 violations expected)
+npm run dev:p        # Perceivable only (8 violations)
+npm run dev:o        # Operable only (11 violations)
+npm run dev:u        # Understandable only (9 violations)
+npm run dev:r        # Robust only (5 violations)
 ```
 This will open the test page at `http://localhost:3000`
 
@@ -45,9 +49,22 @@ npm run build
 ```
 The output will be in the `dist/` directory.
 
+## Expected Violations Summary
+
+When running with all principles (`npm run dev`), expect **31 total violations**:
+
+| Principle | Count | Breakdown |
+|-----------|-------|----------|
+| **Perceivable** | 8 | 1 Critical (missing alt)<br>2 Serious (empty alt, low contrast, empty heading)<br>5 Moderate (filename alt, overlay contrast, skipped heading, multiple H1s) |
+| **Operable** | 11 | 2 Serious (div/span not keyboard accessible)<br>3 Moderate (vague links)<br>3 Serious (positive tabindex)<br>1 Moderate (hidden focusable)<br>2 Minor (negative tabindex on native) |
+| **Understandable** | 9 | 3 Critical (unlabeled inputs)<br>2 Moderate (aria-label only)<br>1 Serious (radio fieldset)<br>1 Moderate (checkbox fieldset)<br>2 Serious (required fields) |
+| **Robust** | 5 | 1 Serious (duplicate IDs)<br>2 Critical (buttons without names)<br>2 Moderate (inputs with aria-label but no visible label) |
+
+**Severity Totals:** 6 Critical, 12 Serious, 11 Moderate, 2 Minor
+
 ## Test Components
 
-Each WCAG rule has its own React component in the appropriate principle directory:
+Each WCAG rule has its own React component in the appropriate principle directory. All components accept a `ruleNumber` prop for dynamic numbering:
 
 ### Perceivable (3 components)
 - `ImageAltTextTests.tsx` - Tests for WCAG 1.1.1
