@@ -2,6 +2,7 @@ import { ScanResult, Violation, MessageType, Severity } from '../types';
 
 // DOM Elements
 const scanButton = document.getElementById('scanButton') as HTMLButtonElement;
+const copyButton = document.getElementById('copyButton') as HTMLButtonElement;
 const exportButton = document.getElementById('exportButton') as HTMLButtonElement;
 const loading = document.getElementById('loading') as HTMLDivElement;
 const results = document.getElementById('results') as HTMLElement;
@@ -27,6 +28,7 @@ let currentScanResult: ScanResult | null = null;
  */
 async function init() {
   scanButton.addEventListener('click', handleScan);
+  copyButton.addEventListener('click', handleCopy);
   exportButton.addEventListener('click', handleExport);
   
   // Add filter listeners
@@ -280,6 +282,47 @@ function createViolationCard(violation: Violation, index: number): HTMLElement {
   card.appendChild(footer);
   
   return card;
+}
+
+/**
+ * Handle copy to clipboard button click
+ */
+async function handleCopy() {
+  if (!currentScanResult) {
+    return;
+  }
+
+  try {
+    // Create export data
+    const exportData = {
+      timestamp: new Date().toISOString(),
+      url: currentScanResult.url || 'unknown',
+      summary: currentScanResult.summary,
+      violations: currentScanResult.violations
+    };
+
+    // Convert to JSON
+    const jsonString = JSON.stringify(exportData, null, 2);
+    
+    // Copy to clipboard
+    await navigator.clipboard.writeText(jsonString);
+    
+    // Show feedback
+    const originalText = copyButton.textContent;
+    copyButton.textContent = '✓ Copied!';
+    copyButton.disabled = true;
+    
+    setTimeout(() => {
+      copyButton.textContent = originalText;
+      copyButton.disabled = false;
+    }, 2000);
+  } catch (error) {
+    console.error('Failed to copy to clipboard:', error);
+    copyButton.textContent = '✗ Failed';
+    setTimeout(() => {
+      copyButton.textContent = 'Copy to Clipboard';
+    }, 2000);
+  }
 }
 
 /**Handle export button click
