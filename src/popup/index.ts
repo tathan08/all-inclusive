@@ -2,9 +2,11 @@ import { ScanResult, Violation, MessageType, Severity } from '../types';
 
 // DOM Elements
 const scanButton = document.getElementById('scanButton') as HTMLButtonElement;
+const rescanButton = document.getElementById('rescanButton') as HTMLButtonElement;
 const copyButton = document.getElementById('copyButton') as HTMLButtonElement;
 const exportButton = document.getElementById('exportButton') as HTMLButtonElement;
 const loading = document.getElementById('loading') as HTMLDivElement;
+const scanInfo = document.getElementById('scanInfo') as HTMLDivElement;
 const results = document.getElementById('results') as HTMLElement;
 const emptyState = document.getElementById('emptyState') as HTMLElement;
 const violationsList = document.getElementById('violationsList') as HTMLDivElement;
@@ -37,6 +39,7 @@ let currentSortOrder: 'default' | 'severity' | 'principle' = 'default';
  */
 async function init() {
   scanButton.addEventListener('click', handleScan);
+  rescanButton.addEventListener('click', handleScan);
   copyButton.addEventListener('click', handleCopy);
   exportButton.addEventListener('click', handleExport);
   
@@ -65,7 +68,9 @@ async function init() {
 async function handleScan() {
   try {
     scanButton.disabled = true;
+    rescanButton.disabled = true;
     loading.classList.remove('hidden');
+    scanInfo.classList.add('hidden');
     results.classList.add('hidden');
     emptyState.classList.add('hidden');
 
@@ -122,6 +127,7 @@ async function handleScan() {
     showError(errorMessage);
   } finally {
     scanButton.disabled = false;
+    rescanButton.disabled = false;
     loading.classList.add('hidden');
   }
 }
@@ -175,6 +181,9 @@ function displayResults(scanResult: ScanResult) {
   }
 
   const { summary, violations, url, timestamp } = scanResult;
+
+  // Show scan info
+  scanInfo.classList.remove('hidden');
 
   // Update scan info
   scannedUrl.textContent = truncateUrl(url);

@@ -15,30 +15,34 @@
       <p class="tagline">WCAG Accessibility Checker</p>
     </header>
 
-    <section class="scan-section">
+    <!-- Scan Control Section -->
+    <section class="scan-control">
       <button id="scanButton" class="btn-primary">
         Scan This Page
       </button>
+      
       <div id="loading" class="loading hidden">
         <div class="spinner"></div>
         <p>Analyzing page...</p>
       </div>
-    </section>
 
-    <section id="results" class="results hidden">
-      <div class="scan-info">
-        <div class="scan-info-label">Currently scanned:</div>
+      <div id="scanInfo" class="scan-info hidden">
+        <div class="scan-info-header">
+          <div class="scan-info-label">Currently scanned:</div>
+          <button id="rescanButton" class="btn-rescan" title="Scan again">
+            <span>🔄</span>
+          </button>
+        </div>
         <div class="scan-info-url" id="scannedUrl">-</div>
         <div class="scan-info-time" id="scannedTime">-</div>
       </div>
-      
+    </section>
+
+    <!-- Results Section -->
+    <section id="results" class="results hidden">
       <div class="summary">
-        <h2>Scan Results</h2>
+        <h2>Scan Results <span class="total-count">(<span id="totalCount">0</span> issues)</span></h2>
         <div class="summary-stats">
-          <div class="stat-item stat-total">
-            <span class="stat-number" id="totalCount">0</span>
-            <span class="stat-label">Total Issues</span>
-          </div>
           <div class="stat-item stat-critical">
             <span class="stat-number" id="criticalCount">0</span>
             <span class="stat-label">Critical</span>
@@ -56,46 +60,54 @@
             <span class="stat-label">Minor</span>
           </div>
         </div>
-        <button id="copyButton" class="btn-secondary">Copy to Clipboard</button>
-        <button id="exportButton" class="btn-secondary">Export as JSON</button>
+        
+        <div class="action-buttons">
+          <button id="copyButton" class="btn-secondary">📋 Copy</button>
+          <button id="exportButton" class="btn-secondary">💾 Export JSON</button>
+        </div>
       </div>
 
-      <div class="filters">
-        <label>
-          <input type="checkbox" id="filterCritical" checked>
-          Critical
-        </label>
-        <label>
-          <input type="checkbox" id="filterSerious" checked>
-          Serious
-        </label>
-        <label>
-          <input type="checkbox" id="filterModerate" checked>
-          Moderate
-        </label>
-        <label>
-          <input type="checkbox" id="filterMinor" checked>
-          Minor
-        </label>
-      </div>
+      <!-- Filter and Sort Controls -->
+      <div class="controls-group">
+        <div class="filters">
+          <span class="filter-label">Filter:</span>
+          <label>
+            <input type="checkbox" id="filterCritical" checked>
+            Critical
+          </label>
+          <label>
+            <input type="checkbox" id="filterSerious" checked>
+            Serious
+          </label>
+          <label>
+            <input type="checkbox" id="filterModerate" checked>
+            Moderate
+          </label>
+          <label>
+            <input type="checkbox" id="filterMinor" checked>
+            Minor
+          </label>
+        </div>
 
-      <div class="sort-controls">
-        <label for="sortSelect">Sort by:</label>
-        <select id="sortSelect" class="sort-dropdown">
-          <option value="default">Page Order (Default)</option>
-          <option value="severity">Severity</option>
-          <option value="principle">Type (POUR)</option>
-        </select>
-      </div>
+        <div class="sort-controls">
+          <label for="sortSelect">Sort by:</label>
+          <select id="sortSelect" class="sort-dropdown">
+            <option value="default">Page Order</option>
+            <option value="severity">Severity</option>
+            <option value="principle">Type (POUR)</option>
+          </select>
+        </div>
 
-      <div id="resultsCount" class="results-count hidden">
-        <span class="count-icon">📋</span>
-        <span id="countText">Showing 0 violations</span>
+        <div id="resultsCount" class="results-count hidden">
+          <span class="count-icon">📋</span>
+          <span id="countText">Showing 0 violations</span>
+        </div>
       </div>
 
       <div id="violationsList" class="violations-list"></div>
     </section>
 
+    <!-- Empty State -->
     <section id="emptyState" class="empty-state">
       <h3>No Issues Found</h3>
       <p>This page appears to be accessible!</p>
