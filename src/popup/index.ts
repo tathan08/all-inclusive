@@ -16,6 +16,7 @@ const totalCount = document.getElementById('totalCount') as HTMLSpanElement;
 const criticalCount = document.getElementById('criticalCount') as HTMLSpanElement;
 const seriousCount = document.getElementById('seriousCount') as HTMLSpanElement;
 const moderateCount = document.getElementById('moderateCount') as HTMLSpanElement;
+const minorCount = document.getElementById('minorCount') as HTMLSpanElement;
 
 // Filters
 const filterCritical = document.getElementById('filterCritical') as HTMLInputElement;
@@ -173,6 +174,7 @@ function displayResults(scanResult: ScanResult) {
   criticalCount.textContent = summary.critical.toString();
   seriousCount.textContent = summary.serious.toString();
   moderateCount.textContent = summary.moderate.toString();
+  minorCount.textContent = summary.minor.toString();
 
   if (summary.total === 0) {
     emptyState.classList.remove('hidden');
