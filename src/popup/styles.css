@@ -209,6 +209,10 @@ header h1 {
   border-left-color: #ffc107;
 }
 
+.stat-minor {
+  border-left-color: #28a745; 
+}
+
 .stat-number {
   display: block;
   font-size: 28px;
