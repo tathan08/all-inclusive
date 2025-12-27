@@ -45,7 +45,7 @@ export const keyboardAccessible: AccessibilityRule = {
             description: `This ${tagName} element has click handlers but cannot be accessed via keyboard.`,
             element: `[data-violation="${uniqueId}"]`,
             htmlSnippet: element.outerHTML.substring(0, 200),
-            suggestion: `Add tabindex="0" and appropriate keyboard event handlers, or use a <button> element instead.`,
+            suggestion: `Add tabindex="0" and appropriate keyboard event handlers, or use a &lt;button&gt; element instead.`,
             learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html',
           });
         }
@@ -86,7 +86,7 @@ export const keyboardAccessible: AccessibilityRule = {
               description: `This ${tagName} element appears to be clickable (cursor: pointer) but cannot be accessed via keyboard.`,
               element: `[data-violation="${uniqueId}"]`,
               htmlSnippet: element.outerHTML.substring(0, 200),
-              suggestion: `Add tabindex="0" and onKeyDown/onKeyUp handlers for Enter and Space keys, or use a <button> element instead.`,
+              suggestion: `Add tabindex="0" and onKeyDown/onKeyUp handlers for Enter and Space keys, or use a &lt;button&gt; element instead.`,
               learnMoreUrl: 'https://www.w3.org/WAI/WCAG22/Understanding/keyboard.html',
             });
           }
