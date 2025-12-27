@@ -22,11 +22,17 @@ const seriousCount = document.getElementById('seriousCount') as HTMLSpanElement;
 const moderateCount = document.getElementById('moderateCount') as HTMLSpanElement;
 const minorCount = document.getElementById('minorCount') as HTMLSpanElement;
 
-// Filters
+// Severity Filters
 const filterCritical = document.getElementById('filterCritical') as HTMLInputElement;
 const filterSerious = document.getElementById('filterSerious') as HTMLInputElement;
 const filterModerate = document.getElementById('filterModerate') as HTMLInputElement;
 const filterMinor = document.getElementById('filterMinor') as HTMLInputElement;
+
+// Principle Filters
+const filterPerceivable = document.getElementById('filterPerceivable') as HTMLInputElement;
+const filterOperable = document.getElementById('filterOperable') as HTMLInputElement;
+const filterUnderstandable = document.getElementById('filterUnderstandable') as HTMLInputElement;
+const filterRobust = document.getElementById('filterRobust') as HTMLInputElement;
 
 // Sort
 const sortSelect = document.getElementById('sortSelect') as HTMLSelectElement;
@@ -44,7 +50,8 @@ async function init() {
   exportButton.addEventListener('click', handleExport);
   
   // Add filter listeners
-  [filterCritical, filterSerious, filterModerate, filterMinor].forEach(filter => {
+  [filterCritical, filterSerious, filterModerate, filterMinor, 
+   filterPerceivable, filterOperable, filterUnderstandable, filterRobust].forEach(filter => {
     filter.addEventListener('change', () => displayViolations(currentScanResult));
   });
 
@@ -224,16 +231,24 @@ function displayViolations(scanResult: ScanResult | null) {
 
   // Small delay to show loading animation
   setTimeout(() => {
-    // Get active filters
-    const activeFilters: Severity[] = [];
-    if (filterCritical.checked) activeFilters.push(Severity.CRITICAL);
-    if (filterSerious.checked) activeFilters.push(Severity.SERIOUS);
-    if (filterModerate.checked) activeFilters.push(Severity.MODERATE);
-    if (filterMinor.checked) activeFilters.push(Severity.MINOR);
+    // Get active severity filters
+    const activeSeverityFilters: Severity[] = [];
+    if (filterCritical.checked) activeSeverityFilters.push(Severity.CRITICAL);
+    if (filterSerious.checked) activeSeverityFilters.push(Severity.SERIOUS);
+    if (filterModerate.checked) activeSeverityFilters.push(Severity.MODERATE);
+    if (filterMinor.checked) activeSeverityFilters.push(Severity.MINOR);
 
-    // Filter violations
+    // Get active principle filters
+    const activePrincipleFilters: string[] = [];
+    if (filterPerceivable.checked) activePrincipleFilters.push('perceivable');
+    if (filterOperable.checked) activePrincipleFilters.push('operable');
+    if (filterUnderstandable.checked) activePrincipleFilters.push('understandable');
+    if (filterRobust.checked) activePrincipleFilters.push('robust');
+
+    // Filter violations by both severity and principle
     let filteredViolations = scanResult.violations.filter(v => 
-      activeFilters.includes(v.severity)
+      activeSeverityFilters.includes(v.severity) && 
+      activePrincipleFilters.includes(v.principle)
     );
 
     // Sort violations based on current sort order
