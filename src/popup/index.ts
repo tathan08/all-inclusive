@@ -8,6 +8,8 @@ const loading = document.getElementById('loading') as HTMLDivElement;
 const results = document.getElementById('results') as HTMLElement;
 const emptyState = document.getElementById('emptyState') as HTMLElement;
 const violationsList = document.getElementById('violationsList') as HTMLDivElement;
+const scannedUrl = document.getElementById('scannedUrl') as HTMLDivElement;
+const scannedTime = document.getElementById('scannedTime') as HTMLDivElement;
 
 // Stat counters
 const totalCount = document.getElementById('totalCount') as HTMLSpanElement;
@@ -159,7 +161,12 @@ function displayResults(scanResult: ScanResult) {
     errorDiv.classList.add('hidden');
   }
 
-  const { summary, violations } = scanResult;
+  const { summary, violations, url, timestamp } = scanResult;
+
+  // Update scan info
+  scannedUrl.textContent = truncateUrl(url);
+  scannedUrl.title = url; // Show full URL on hover
+  scannedTime.textContent = formatTimestamp(timestamp);
 
   // Update summary stats
   totalCount.textContent = summary.total.toString();
@@ -386,6 +393,64 @@ function escapeHtml(html: string): string {
   const div = document.createElement('div');
   div.textContent = html;
   return div.innerHTML;
+}
+
+/**
+ * Truncate URL intelligently while preserving the domain
+ */
+function truncateUrl(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    const domain = urlObj.hostname;
+    const path = urlObj.pathname + urlObj.search + urlObj.hash;
+    
+    const maxLength = 50;
+    
+    // If the full URL is short enough, return it
+    if (url.length <= maxLength) {
+      return url;
+    }
+    
+    // Always include the protocol and domain
+    const prefix = `${urlObj.protocol}//${domain}`;
+    
+    // Calculate remaining space for the path
+    const remainingSpace = maxLength - prefix.length;
+    
+    if (remainingSpace <= 3) {
+      // Not enough space for path, just show domain
+      return prefix;
+    }
+    
+    // Truncate the path if needed
+    if (path.length > remainingSpace) {
+      const truncatedPath = path.substring(0, remainingSpace - 3) + '...';
+      return prefix + truncatedPath;
+    }
+    
+    return prefix + path;
+  } catch (e) {
+    // If URL parsing fails, do simple truncation
+    return url.length > 50 ? url.substring(0, 47) + '...' : url;
+  }
+}
+
+/**
+ * Format timestamp to readable date and time
+ */
+function formatTimestamp(timestamp: number): string {
+  const date = new Date(timestamp);
+  const dateStr = date.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric', 
+    year: 'numeric' 
+  });
+  const timeStr = date.toLocaleTimeString('en-US', { 
+    hour: '2-digit', 
+    minute: '2-digit',
+    second: '2-digit'
+  });
+  return `${dateStr} at ${timeStr}`;
 }
 
 // Initialize when popup loads
