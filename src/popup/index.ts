@@ -10,6 +10,8 @@ const emptyState = document.getElementById('emptyState') as HTMLElement;
 const violationsList = document.getElementById('violationsList') as HTMLDivElement;
 const scannedUrl = document.getElementById('scannedUrl') as HTMLDivElement;
 const scannedTime = document.getElementById('scannedTime') as HTMLDivElement;
+const resultsCount = document.getElementById('resultsCount') as HTMLDivElement;
+const countText = document.getElementById('countText') as HTMLSpanElement;
 
 // Stat counters
 const totalCount = document.getElementById('totalCount') as HTMLSpanElement;
@@ -24,7 +26,11 @@ const filterSerious = document.getElementById('filterSerious') as HTMLInputEleme
 const filterModerate = document.getElementById('filterModerate') as HTMLInputElement;
 const filterMinor = document.getElementById('filterMinor') as HTMLInputElement;
 
+// Sort
+const sortSelect = document.getElementById('sortSelect') as HTMLSelectElement;
+
 let currentScanResult: ScanResult | null = null;
+let currentSortOrder: 'default' | 'severity' | 'principle' = 'default';
 
 /**
  * Initialize the popup
@@ -37,6 +43,12 @@ async function init() {
   // Add filter listeners
   [filterCritical, filterSerious, filterModerate, filterMinor].forEach(filter => {
     filter.addEventListener('change', () => displayViolations(currentScanResult));
+  });
+
+  // Add sort listener
+  sortSelect.addEventListener('change', () => {
+    currentSortOrder = sortSelect.value as 'default' | 'severity' | 'principle';
+    displayViolations(currentScanResult);
   });
 
   // Load last scan result from storage
@@ -192,30 +204,115 @@ function displayResults(scanResult: ScanResult) {
 function displayViolations(scanResult: ScanResult | null) {
   if (!scanResult) return;
 
-  violationsList.innerHTML = '';
-
-  // Get active filters
-  const activeFilters: Severity[] = [];
-  if (filterCritical.checked) activeFilters.push(Severity.CRITICAL);
-  if (filterSerious.checked) activeFilters.push(Severity.SERIOUS);
-  if (filterModerate.checked) activeFilters.push(Severity.MODERATE);
-  if (filterMinor.checked) activeFilters.push(Severity.MINOR);
-
-  // Filter violations
-  const filteredViolations = scanResult.violations.filter(v => 
-    activeFilters.includes(v.severity)
-  );
-
-  if (filteredViolations.length === 0) {
-    violationsList.innerHTML = '<p class="no-results">No violations match the current filters.</p>';
-    return;
+  // Store current height to prevent layout shift
+  const currentHeight = violationsList.scrollHeight;
+  if (currentHeight > 0) {
+    violationsList.style.minHeight = `${currentHeight}px`;
   }
 
-  // Render violations
-  filteredViolations.forEach((violation, index) => {
-    const violationCard = createViolationCard(violation, index);
-    violationsList.appendChild(violationCard);
-  });
+  // Show loading state
+  violationsList.classList.add('updating');
+
+  // Small delay to show loading animation
+  setTimeout(() => {
+    // Get active filters
+    const activeFilters: Severity[] = [];
+    if (filterCritical.checked) activeFilters.push(Severity.CRITICAL);
+    if (filterSerious.checked) activeFilters.push(Severity.SERIOUS);
+    if (filterModerate.checked) activeFilters.push(Severity.MODERATE);
+    if (filterMinor.checked) activeFilters.push(Severity.MINOR);
+
+    // Filter violations
+    let filteredViolations = scanResult.violations.filter(v => 
+      activeFilters.includes(v.severity)
+    );
+
+    // Sort violations based on current sort order
+    filteredViolations = sortViolations(filteredViolations, currentSortOrder);
+
+    // Clear list
+    violationsList.innerHTML = '';
+
+    // Update count display
+    updateResultsCount(filteredViolations.length, scanResult.summary.total);
+
+    if (filteredViolations.length === 0) {
+      violationsList.innerHTML = '<p class="no-results">No violations match the current filters.</p>';
+      violationsList.classList.remove('updating');
+      // Reset min-height after content is rendered
+      requestAnimationFrame(() => {
+        violationsList.style.minHeight = '';
+      });
+      return;
+    }
+
+    // Render violations
+    filteredViolations.forEach((violation, index) => {
+      const violationCard = createViolationCard(violation, index);
+      violationsList.appendChild(violationCard);
+    });
+
+    // Remove loading state and reset min-height after content is rendered
+    violationsList.classList.remove('updating');
+    requestAnimationFrame(() => {
+      violationsList.style.minHeight = '';
+    });
+  }, 150);
+}
+
+/**
+ * Sort violations based on the selected sort order
+ */
+function sortViolations(violations: Violation[], sortOrder: 'default' | 'severity' | 'principle'): Violation[] {
+  if (sortOrder === 'default') {
+    // Keep original order (as they appear on the page)
+    return violations;
+  }
+
+  const sorted = [...violations];
+
+  if (sortOrder === 'severity') {
+    // Sort by severity: Critical > Serious > Moderate > Minor
+    const severityOrder: Record<Severity, number> = {
+      [Severity.CRITICAL]: 0,
+      [Severity.SERIOUS]: 1,
+      [Severity.MODERATE]: 2,
+      [Severity.MINOR]: 3,
+    };
+    
+    sorted.sort((a, b) => severityOrder[a.severity] - severityOrder[b.severity]);
+  } else if (sortOrder === 'principle') {
+    // Sort by POUR principle: Perceivable > Operable > Understandable > Robust
+    const principleOrder: Record<string, number> = {
+      'perceivable': 0,
+      'operable': 1,
+      'understandable': 2,
+      'robust': 3,
+    };
+    
+    sorted.sort((a, b) => principleOrder[a.principle] - principleOrder[b.principle]);
+  }
+
+  return sorted;
+}
+
+/**
+ * Update the results count display
+ */
+function updateResultsCount(shown: number, total: number) {
+  resultsCount.classList.remove('hidden');
+  
+  if (shown === total) {
+    countText.textContent = `Showing all ${total} violation${total !== 1 ? 's' : ''}`;
+  } else {
+    countText.textContent = `Showing ${shown} of ${total} violation${total !== 1 ? 's' : ''}`;
+  }
+  
+  // Add a brief highlight animation
+  resultsCount.classList.add('updated');
+  setTimeout(() => {
+    resultsCount.classList.remove('updated');
+  }, 500);
 }
 
 /**

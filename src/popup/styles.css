@@ -252,6 +252,127 @@ header h1 {
   cursor: pointer;
 }
 
+/* Sort Controls */
+.sort-controls {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  margin-bottom: 15px;
+}
+
+.sort-controls label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #495057;
+}
+
+.sort-dropdown {
+  flex: 1;
+  padding: 6px 10px;
+  font-size: 13px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  background: white;
+  cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+
+.sort-dropdown:hover {
+  border-color: #667eea;
+}
+
+.sort-dropdown:focus {
+  outline: none;
+  border-color: #667eea;
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.1);
+}
+
+/* Results Count */
+.results-count {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 15px;
+  background: #e7f3ff;
+  border: 1px solid #b3d9ff;
+  border-radius: 6px;
+  margin-bottom: 15px;
+  font-size: 13px;
+  font-weight: 500;
+  color: #0056b3;
+  transition: all 0.3s ease;
+}
+
+.results-count.hidden {
+  display: none;
+}
+
+.results-count.updated {
+  background: #d4edda;
+  border-color: #c3e6cb;
+  animation: pulse 0.5s ease;
+}
+
+.count-icon {
+  font-size: 16px;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.02);
+  }
+}
+
+/* Violations List */
+.violations-list {
+  max-height: 400px;
+  overflow-y: auto;
+  transition: opacity 0.2s ease, min-height 0.2s ease;
+  position: relative;
+}
+
+.violations-list.updating {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.violations-list.updating::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 24px;
+  height: 24px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  z-index: 10;
+}
+
+.list-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+}
+
+.spinner-small {
+  width: 24px;
+  height: 24px;
+  border: 3px solid #f3f3f3;
+  border-top: 3px solid #667eea;
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
 /* Violations List */
 .violations-list {
   max-height: 400px;

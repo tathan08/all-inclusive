@@ -79,6 +79,20 @@
         </label>
       </div>
 
+      <div class="sort-controls">
+        <label for="sortSelect">Sort by:</label>
+        <select id="sortSelect" class="sort-dropdown">
+          <option value="default">Page Order (Default)</option>
+          <option value="severity">Severity</option>
+          <option value="principle">Type (POUR)</option>
+        </select>
+      </div>
+
+      <div id="resultsCount" class="results-count hidden">
+        <span class="count-icon">📋</span>
+        <span id="countText">Showing 0 violations</span>
+      </div>
+
       <div id="violationsList" class="violations-list"></div>
     </section>
 
