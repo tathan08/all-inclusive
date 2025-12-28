@@ -428,6 +428,7 @@ function createViolationCard(violation: Violation, index: number): HTMLElement {
   meta.className = 'violation-meta';
   meta.innerHTML = `
     <span class="severity-tag severity-${violation.severity}">${violation.severity}</span>
+    <span class="wcag-tag">${violation.principle.toUpperCase()}</span>
     <span class="wcag-tag">WCAG ${violation.wcagCriteria} (Level ${violation.level})</span>
   `;
   
