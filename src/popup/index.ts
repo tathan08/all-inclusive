@@ -39,6 +39,8 @@ const sortSelect = document.getElementById('sortSelect') as HTMLSelectElement;
 
 let currentScanResult: ScanResult | null = null;
 let currentSortOrder: 'default' | 'severity' | 'principle' = 'default';
+const resolvedViolations = new Set<string>();
+const expandedViolations = new Set<string>();
 
 /**
  * Initialize the popup
@@ -343,26 +345,89 @@ function updateResultsCount(shown: number, total: number) {
  * Create a violation card element
  */
 function createViolationCard(violation: Violation, index: number): HTMLElement {
+  const violationId = `${violation.element}-${violation.message}`;
+  const isResolved = resolvedViolations.has(violationId);
+  const isExpanded = expandedViolations.has(violationId);
+  
   const card = document.createElement('div');
   card.className = `violation-card severity-${violation.severity}`;
+  if (isResolved) {
+    card.classList.add('resolved');
+  }
+  if (!isExpanded) {
+    card.classList.add('collapsed');
+  }
   
   const header = document.createElement('div');
   header.className = 'violation-header';
+  
+  const checkbox = document.createElement('div');
+  checkbox.className = 'resolve-checkbox';
+  if (isResolved) {
+    checkbox.classList.add('checked');
+    checkbox.innerHTML = '<svg viewBox="0 0 16 16" width="16" height="16"><path fill="currentColor" d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>';
+  }
+  checkbox.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (resolvedViolations.has(violationId)) {
+      resolvedViolations.delete(violationId);
+      card.classList.remove('resolved');
+    } else {
+      resolvedViolations.add(violationId);
+      card.classList.add('resolved');
+    }
+    checkbox.classList.toggle('checked');
+    if (checkbox.classList.contains('checked')) {
+      checkbox.innerHTML = '<svg viewBox="0 0 16 16" width="16" height="16"><path fill="currentColor" d="M13.78 4.22a.75.75 0 010 1.06l-7.25 7.25a.75.75 0 01-1.06 0L2.22 9.28a.75.75 0 011.06-1.06L6 10.94l6.72-6.72a.75.75 0 011.06 0z"/></svg>';
+    } else {
+      checkbox.innerHTML = '';
+    }
+  });
   
   const title = document.createElement('h3');
   title.className = 'violation-title';
   title.innerHTML = `
     <span class="violation-number">${index + 1}</span>
     <span>${violation.message}</span>
-    <span class="severity-badge severity-${violation.severity}">${violation.severity}</span>
   `;
   
+  const toggleButton = document.createElement('div');
+  toggleButton.className = 'toggle-button';
+  toggleButton.innerHTML = '<svg viewBox="0 0 16 16" width="16" height="16"><path fill="currentColor" d="M4.427 7.427l3.396 3.396a.25.25 0 00.354 0l3.396-3.396A.25.25 0 0011.396 7H4.604a.25.25 0 00-.177.427z"/></svg>';
+  if (isExpanded) {
+    toggleButton.classList.add('expanded');
+  }
+  
+  header.appendChild(checkbox);
   header.appendChild(title);
+  header.appendChild(toggleButton);
+  
+  // Make entire header clickable for toggle
+  header.style.cursor = 'pointer';
+  header.addEventListener('click', (e) => {
+    // Don't toggle if clicking the checkbox
+    if ((e.target as HTMLElement).closest('.resolve-checkbox')) {
+      return;
+    }
+    
+    if (expandedViolations.has(violationId)) {
+      expandedViolations.delete(violationId);
+      card.classList.add('collapsed');
+      toggleButton.classList.remove('expanded');
+    } else {
+      expandedViolations.add(violationId);
+      card.classList.remove('collapsed');
+      toggleButton.classList.add('expanded');
+    }
+  });
+  
+  const content = document.createElement('div');
+  content.className = 'violation-content';
   
   const meta = document.createElement('div');
   meta.className = 'violation-meta';
   meta.innerHTML = `
-    <span class="wcag-tag">${violation.principle.toUpperCase()}</span>
+    <span class="severity-tag severity-${violation.severity}">${violation.severity}</span>
     <span class="wcag-tag">WCAG ${violation.wcagCriteria} (Level ${violation.level})</span>
   `;
   
@@ -378,15 +443,15 @@ function createViolationCard(violation: Violation, index: number): HTMLElement {
   `;
   
   card.appendChild(header);
-  card.appendChild(meta);
-  card.appendChild(description);
-  card.appendChild(elementInfo);
+  content.appendChild(meta);
+  content.appendChild(description);
+  content.appendChild(elementInfo);
   
   if (violation.suggestion) {
     const suggestion = document.createElement('div');
     suggestion.className = 'violation-suggestion';
     suggestion.innerHTML = `<strong>Suggestion:</strong> ${violation.suggestion}`;
-    card.appendChild(suggestion);
+    content.appendChild(suggestion);
   }
   
   // Footer with Search in code and Learn More links
@@ -409,7 +474,8 @@ function createViolationCard(violation: Violation, index: number): HTMLElement {
     footer.appendChild(learnMore);
   }
   
-  card.appendChild(footer);
+  content.appendChild(footer);
+  card.appendChild(content);
   
   return card;
 }

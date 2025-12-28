@@ -453,11 +453,35 @@ header h1 {
   border-radius: 8px;
   padding: 15px;
   margin-bottom: 15px;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
 }
 
 .violation-card:hover {
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.violation-card.collapsed .violation-content {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+  margin-top: 0;
+}
+
+.violation-card.collapsed .violation-header {
+  margin-bottom: 0;
+}
+
+.violation-card.resolved {
+  background: #f8f9fa;
+  opacity: 0.8;
+}
+
+.violation-content {
+  max-height: 2000px;
+  opacity: 1;
+  overflow: hidden;
+  transition: all 0.3s ease;
+  margin-top: 5px;
 }
 
 .violation-card.severity-critical {
@@ -478,6 +502,72 @@ header h1 {
 
 .violation-header {
   margin-bottom: 10px;
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.violation-header:hover {
+  background: #f8f9fa;
+  margin: -5px -10px 10px -10px;
+  padding: 5px 10px;
+  border-radius: 4px;
+}
+
+.resolve-checkbox {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #c8c8c8;
+  border-radius: 4px;
+  flex-shrink: 0;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: white;
+  transition: all 0.2s ease;
+  margin-top: 2px;
+}
+
+.resolve-checkbox:hover {
+  border-color: #5cb85c;
+  background: #f0f9f0;
+}
+
+.resolve-checkbox.checked {
+  background: #5cb85c;
+  border-color: #5cb85c;
+  color: white;
+}
+
+.resolve-checkbox svg {
+  width: 14px;
+  height: 14px;
+}
+
+.toggle-button {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6c757d;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+  margin-left: auto;
+  pointer-events: none;
+}
+
+.toggle-button svg {
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+}
+
+.toggle-button.expanded svg {
+  transform: rotate(180deg);
 }
 
 .violation-title {
@@ -487,6 +577,7 @@ header h1 {
   gap: 8px;
   margin-bottom: 8px;
   flex-wrap: wrap;
+  flex: 1;
 }
 
 .violation-number {
@@ -544,6 +635,32 @@ header h1 {
   border-radius: 4px;
   color: #495057;
   font-weight: 500;
+}
+
+.severity-tag {
+  font-size: 11px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-weight: 600;
+  text-transform: uppercase;
+  color: white;
+}
+
+.severity-tag.severity-critical {
+  background: #dc3545;
+}
+
+.severity-tag.severity-serious {
+  background: #fd7e14;
+}
+
+.severity-tag.severity-moderate {
+  background: #ffc107;
+  color: #333;
+}
+
+.severity-tag.severity-minor {
+  background: #28a745;
 }
 
 .violation-description {
