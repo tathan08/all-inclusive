@@ -573,11 +573,15 @@ header h1 {
 .violation-title {
   font-size: 15px;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 8px;
   margin-bottom: 8px;
-  flex-wrap: wrap;
   flex: 1;
+}
+
+.violation-title > span:not(.violation-number) {
+  flex: 1;
+  line-height: 1.6;
 }
 
 .violation-number {
